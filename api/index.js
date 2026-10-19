@@ -3,7 +3,7 @@ const RURL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const RTOK = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 const SECRET = process.env.AUTH_SECRET;
 const AE = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-const AP = process.env.ADMIN_PASSWORD || "";
+const AP = (process.env.ADMIN_PASSWORD || "").trim();
 
 async function redis(cmd) {
   const r = await fetch(RURL, { method: "POST", headers: { Authorization: "Bearer " + RTOK }, body: JSON.stringify(cmd) });
@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
   const b = req.body || {};
   try {
     if (b.action === "login") {
-      const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "");
+      const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "").trim();
       if (email === AE && same(pw, AP)) return res.json({ token: mkToken({ e: email, a: 1 }), email, admin: true });
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
