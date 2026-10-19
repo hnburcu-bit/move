@@ -37,20 +37,24 @@ nav button{flex:1;border:0;border-radius:0;background:none;padding:14px 0;color:
 nav button.on{color:var(--ac);font-weight:700}
 .empty{color:var(--mut);padding:6px 0}
 svg{width:100%;height:auto}
+#login{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}#login .card{width:100%;max-width:360px}.err{color:var(--bad);min-height:20px;margin:6px 0}#sync{color:var(--mut);font-size:13px;min-height:18px}
 details summary{cursor:pointer;color:var(--mut)}
 </style>
 </head>
 <body>
 <main>
-<input type="date" id="date" class="date" aria-label="Tarih">
+<div id="login" hidden><div class="card"><h1>Move</h1><input id="lEm" type="email" autocomplete="username" placeholder="E-posta" style="width:100%;margin-bottom:8px"><input id="lPw" type="password" autocomplete="current-password" placeholder="Şifre" style="width:100%"><div class="err" id="lErr"></div><button class="pri" id="lGo" style="width:100%">Giriş yap</button></div></div>
+<input type="date" id="date" class="date" aria-label="Tarih"><div id="sync"></div>
 <section id="t-work"></section>
 <section id="t-food" hidden></section>
 <section id="t-prog" hidden></section>
+<section id="t-acc" hidden></section>
 </main>
 <nav>
 <button data-t="work" class="on">Antrenman</button>
 <button data-t="food">Yemek</button>
 <button data-t="prog">Gelişim</button>
+<button data-t="acc">Hesap</button>
 </nav>
 <script>
 // Besin değerleri: 100 gram için yaklaşık değerler [kcal, protein, karbonhidrat, yağ]
@@ -69,9 +73,23 @@ const FOODS={
 "Fıstık ezmesi":[588,25,20,50],"Badem":[579,21,22,50],"Ceviz":[654,15,14,65],
 "Bal":[304,0.3,82,0],"Sütlü çikolata":[535,7.7,59,30],"Whey protein":[400,80,8,6]
 };
-const KEY="spor-takip-v1";
-let S=JSON.parse(localStorage.getItem(KEY)||"null")||{work:{},meals:{},weights:[],custom:{},goal:2500};
-const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const LEGACY="spor-takip-v1",TK="move-session";
+const EMPTY=()=>({work:{},meals:{},weights:[],custom:{},goal:2500});
+let S=EMPTY(),SES=JSON.parse(localStorage.getItem(TK)||"null"),timer;
+async function api(action,body){
+  const r=await fetch("/api",{method:"POST",headers:{"Content-Type":"application/json",...(SES?{Authorization:"Bearer "+SES.token}:{})},body:JSON.stringify({action,...body})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){if(r.status===401&&SES&&action!=="login")logout();throw new Error(j.error||"Bağlantı hatası")}
+  return j;
+}
+function save(){
+  if(!SES)return;
+  localStorage.setItem("move-data-"+SES.email,JSON.stringify(S));
+  $("sync").textContent="Kaydediliyor...";
+  clearTimeout(timer);
+  timer=setTimeout(()=>api("save",{data:S}).then(()=>$("sync").textContent="Kaydedildi").catch(()=>$("sync").textContent="Kaydedilemedi, internetini kontrol et"),500);
+}
+function logout(){localStorage.removeItem(TK);SES=null;S=EMPTY();$("login").hidden=false}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const r1=n=>Math.round(n*10)/10;
@@ -84,8 +102,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));render()});
 
 function render(){
-  ["work","food","prog"].forEach(t=>$("t-"+t).hidden=t!==tab);
-  ({work:renderWork,food:renderFood,prog:renderProg})[tab]();
+  ["work","food","prog","acc"].forEach(t=>$("t-"+t).hidden=t!==tab);
+  ({work:renderWork,food:renderFood,prog:renderProg,acc:renderAcc})[tab]();
 }
 
 /* ---------- Antrenman ---------- */
@@ -168,7 +186,43 @@ function renderProg(){
     S.weights=S.weights.filter(x=>x.date!==d);S.weights.push({date:d,kg});save();renderProg();
   };
 }
-render();
+/* ---------- Hesap ---------- */
+async function renderAcc(){
+  $("t-acc").innerHTML=`<h1>Hesap</h1><div class="card"><div class="item"><div class="n">${esc(SES.email)}<small>${SES.admin?"Yönetici":"Kullanıcı"}</small></div></div><button id="out" style="width:100%">Çıkış yap</button></div>`+(SES.admin?`<div class="card"><b>Yeni kullanıcı ekle</b><input id="nEm" type="email" placeholder="E-posta" style="width:100%;margin:8px 0"><input id="nPw" type="text" placeholder="Şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><div class="err" id="nErr"></div><button class="pri" id="nAdd" style="width:100%">Kullanıcıyı ekle</button></div><div class="card"><b>Kullanıcılar</b><div id="ulist" class="empty">Yükleniyor...</div></div>`:"");
+  $("out").onclick=logout;
+  if(!SES.admin)return;
+  const list=async()=>{try{const j=await api("users");$("ulist").innerHTML=j.users.length?j.users.map(u=>`<div class="item"><div class="n">${esc(u)}</div></div>`).join(""):"Henüz kullanıcı yok."}catch(e){$("ulist").textContent=e.message}};
+  list();
+  $("nAdd").onclick=async()=>{
+    $("nErr").textContent="";
+    try{await api("adduser",{email:$("nEm").value,password:$("nPw").value});$("nEm").value="";$("nPw").value="";$("nErr").style.color="var(--ac)";$("nErr").textContent="Kullanıcı eklendi";list()}
+    catch(e){$("nErr").style.color="var(--bad)";$("nErr").textContent=e.message}
+  };
+}
+
+/* ---------- Giriş ---------- */
+$("lGo").onclick=async()=>{
+  $("lErr").textContent="";
+  try{
+    const j=await api("login",{email:$("lEm").value,password:$("lPw").value});
+    SES={token:j.token,email:j.email,admin:j.admin};localStorage.setItem(TK,JSON.stringify(SES));
+    $("lPw").value="";start();
+  }catch(e){$("lErr").textContent=e.message}
+};
+async function start(){
+  if(!SES){$("login").hidden=false;return}
+  $("login").hidden=true;
+  const c=localStorage.getItem("move-data-"+SES.email);
+  S=c?JSON.parse(c):EMPTY();render();
+  try{
+    const j=await api("load");
+    if(j.data){S=j.data;localStorage.setItem("move-data-"+SES.email,JSON.stringify(S))}
+    else if(SES.admin&&localStorage.getItem(LEGACY)){S=JSON.parse(localStorage.getItem(LEGACY));save()}
+    else save();
+    $("sync").textContent="";render();
+  }catch(e){$("sync").textContent="Çevrimdışı, kayıtlar telefondan gösteriliyor"}
+}
+start();
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
