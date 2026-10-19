@@ -79,7 +79,7 @@ let S=EMPTY(),SES=JSON.parse(localStorage.getItem(TK)||"null"),timer;
 async function api(action,body){
   const r=await fetch("/api",{method:"POST",headers:{"Content-Type":"application/json",...(SES?{Authorization:"Bearer "+SES.token}:{})},body:JSON.stringify({action,...body})});
   const j=await r.json().catch(()=>({}));
-  if(!r.ok){if(r.status===401&&SES&&action!=="login")logout();throw new Error(j.error||"Bağlantı hatası")}
+  if(!r.ok){if(r.status===401&&SES&&action!=="login")logout();throw new Error((j.error||"Bağlantı hatası")+(j.debug?" ("+j.debug+")":""))}
   return j;
 }
 function save(){
