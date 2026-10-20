@@ -38,9 +38,9 @@ module.exports = async (req, res) => {
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
         const u = JSON.parse(rec);
-        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0 }), email, admin: false });
+        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0 }), email, admin: false, name: u.name || "", surname: u.surname || "" });
       }
-      return res.status(401).json({ error: "E-posta veya şifre hatalı", debug: "e-posta eşleşti: " + (email === AE ? "evet" : "hayır") + ", yazdığın şifre " + pw.length + " karakter, kayıtlı şifre " + AP.length + " karakter" });
+      return res.status(401).json({ error: "E-posta veya şifre hatalı" });
     }
     const u = readToken(req.headers.authorization);
     if (!u) return res.status(401).json({ error: "Oturum bitti, tekrar giriş yap" });
@@ -55,15 +55,36 @@ module.exports = async (req, res) => {
       await redis(["SET", key, s]);
       return res.json({ ok: true });
     }
+    const ph = "photos:" + u.e;
+    if (b.action === "photolist") return res.json({ dates: ((await redis(["HKEYS", ph])) || []).sort() });
+    if (b.action === "photoget") return res.json({ img: (await redis(["HGET", ph, String(b.date || "")])) || null });
+    if (b.action === "photodel") { await redis(["HDEL", ph, String(b.date || "")]); return res.json({ ok: true }); }
+    if (b.action === "photoadd") {
+      const d = String(b.date || ""), img = String(b.img || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !img.startsWith("data:image/jpeg;base64,") || img.length > 450000) return res.status(400).json({ error: "Geçersiz fotoğraf" });
+      const n = await redis(["HLEN", ph]), ex = await redis(["HEXISTS", ph, d]);
+      if (n >= 40 && !ex) return res.status(400).json({ error: "En fazla 40 fotoğraf kaydedilebilir" });
+      await redis(["HSET", ph, d, img]);
+      return res.json({ ok: true });
+    }
+    if (b.action === "myprogram") return res.json({ text: (await redis(["GET", "prog:" + u.e])) || "" });
     if (u.a) {
+      if (b.action === "getprogram") return res.json({ text: (await redis(["GET", "prog:" + String(b.email || "").trim().toLowerCase()])) || "" });
+      if (b.action === "setprogram") {
+        const t = String(b.email || "").trim().toLowerCase(), text = String(b.text || "");
+        if (text.length > 20000) return res.status(400).json({ error: "Program çok uzun" });
+        if (t !== AE && !(await redis(["HGET", "users", t]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        if (text.trim()) await redis(["SET", "prog:" + t, text]); else await redis(["DEL", "prog:" + t]);
+        return res.json({ ok: true });
+      }
       if (b.action === "users") return res.json({ users: await redis(["HKEYS", "users"]) });
       if (b.action === "adduser") {
-        const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "");
+        const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || ""), name = String(b.name || "").trim().slice(0, 40), surname = String(b.surname || "").trim().slice(0, 40);
         if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: "Geçerli bir e-posta yaz" });
         if (pw.length < 6) return res.status(400).json({ error: "Şifre en az 6 karakter olmalı" });
         if (email === AE) return res.status(400).json({ error: "Bu e-posta yönetici hesabı" });
         const salt = crypto.randomBytes(16).toString("hex");
-        await redis(["HSET", "users", email, JSON.stringify({ salt, hash: hashPw(pw, salt) })]);
+        await redis(["HSET", "users", email, JSON.stringify({ salt, hash: hashPw(pw, salt), name, surname })]);
         return res.json({ ok: true });
       }
     }
