@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
         const u = JSON.parse(rec);
-        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0 }), email, admin: false });
+        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0 }), email, admin: false, name: u.name || "", surname: u.surname || "" });
       }
       return res.status(401).json({ error: "E-posta veya şifre hatalı" });
     }
@@ -58,12 +58,12 @@ module.exports = async (req, res) => {
     if (u.a) {
       if (b.action === "users") return res.json({ users: await redis(["HKEYS", "users"]) });
       if (b.action === "adduser") {
-        const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "");
+        const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || ""), name = String(b.name || "").trim().slice(0, 40), surname = String(b.surname || "").trim().slice(0, 40);
         if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: "Geçerli bir e-posta yaz" });
         if (pw.length < 6) return res.status(400).json({ error: "Şifre en az 6 karakter olmalı" });
         if (email === AE) return res.status(400).json({ error: "Bu e-posta yönetici hesabı" });
         const salt = crypto.randomBytes(16).toString("hex");
-        await redis(["HSET", "users", email, JSON.stringify({ salt, hash: hashPw(pw, salt) })]);
+        await redis(["HSET", "users", email, JSON.stringify({ salt, hash: hashPw(pw, salt), name, surname })]);
         return res.json({ ok: true });
       }
     }
