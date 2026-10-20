@@ -25,7 +25,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac)}
 .row>*{flex:1}
 button.pri{background:var(--ac);color:#06201d;font-weight:700;border:0}
 button.x{flex:0 0 auto;padding:4px 10px;color:var(--bad);border-color:transparent;background:none}
-.card{background:rgba(36,48,68,.84);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:14px;padding:12px;margin-bottom:10px}
+.card{background:rgba(36,48,68,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:14px;padding:12px;margin-bottom:10px}
 .item{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
 .item:first-child{border-top:0}
 .item .n{flex:1}.item small{color:var(--mut);display:block}
@@ -45,7 +45,7 @@ svg{width:100%;height:auto}
 .hero svg{position:absolute;right:-4px;bottom:-6px;height:125%;color:rgba(255,255,255,.2)}
 .hero>div{position:relative}.hero small{color:#cfe3ee}.hero h1{margin:2px 0 0;font-size:26px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.m{background:rgba(36,48,68,.84);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;padding:10px}.m b{font-size:24px}.m small{color:var(--mut);display:block}
+.m{background:rgba(36,48,68,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;padding:10px}.m b{font-size:24px}.m small{color:var(--mut);display:block}
 .m small.up{color:var(--kc)}.m small.dn{color:var(--ac)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips button{padding:6px 12px;border-radius:20px;color:var(--mut)}
 .chips button.on{background:var(--ac);color:#06201d;border:0;font-weight:700}
@@ -124,8 +124,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.
 function render(){
   ["home","work","food","meas","acc"].forEach(t=>$("t-"+t).hidden=t!==tab);
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.t===tab));
-  const bn=({home:1,work:2,food:3,meas:4,acc:1})[tab],bo=({1:.5,2:.55,3:.45,4:.72})[bn];
-  $("bg").style.backgroundImage=`linear-gradient(rgba(27,36,51,${bo}),rgba(27,36,51,${bo})),url(img/bg${bn}.jpg)`;
+  const bn=({home:1,work:2,food:3,meas:4,acc:1})[tab],bo=({1:.18,2:.22,3:.15,4:.42})[bn];
+  $("bg").style.backgroundImage=`linear-gradient(rgba(27,36,51,${bo}),rgba(27,36,51,${bo})),url(bg${bn}.jpg)`;
   ({home:renderHome,work:renderWork,food:renderFood,meas:renderMeas,acc:renderAcc})[tab]();
 }
 
