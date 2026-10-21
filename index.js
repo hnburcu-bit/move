@@ -55,9 +55,9 @@ module.exports = async (req, res) => {
       await redis(["SET", key, s]);
       return res.json({ ok: true });
     }
-    const ph = "photos:" + u.e;
-    if (b.action === "photolist") return res.json({ dates: ((await redis(["HKEYS", ph])) || []).sort() });
-    if (b.action === "photoget") return res.json({ img: (await redis(["HGET", ph, String(b.date || "")])) || null });
+    const ph = "photos:" + u.e, phr = "photos:" + (u.a && b.email ? String(b.email).trim().toLowerCase() : u.e);
+    if (b.action === "photolist") return res.json({ dates: ((await redis(["HKEYS", phr])) || []).sort() });
+    if (b.action === "photoget") return res.json({ img: (await redis(["HGET", phr, String(b.date || "")])) || null });
     if (b.action === "photodel") { await redis(["HDEL", ph, String(b.date || "")]); return res.json({ ok: true }); }
     if (b.action === "photoadd") {
       const d = String(b.date || ""), img = String(b.img || "");
@@ -67,8 +67,28 @@ module.exports = async (req, res) => {
       await redis(["HSET", ph, d, img]);
       return res.json({ ok: true });
     }
+    if (b.action === "mydiet") { const d = await redis(["GET", "diet:" + u.e]); return res.json({ diet: d ? JSON.parse(d) : null }); }
     if (b.action === "myprogram") return res.json({ text: (await redis(["GET", "prog:" + u.e])) || "" });
     if (u.a) {
+      const tg = String(b.email || "").trim().toLowerCase();
+      if (b.action === "members") {
+        const a = (await redis(["HGETALL", "users"])) || [], list = [];
+        for (let i = 0; i < a.length; i += 2) { let r = {}; try { r = JSON.parse(a[i + 1]); } catch (e) {} list.push({ email: a[i], name: r.name || "", surname: r.surname || "" }); }
+        return res.json({ members: list });
+      }
+      if (b.action === "memberdata") {
+        if (tg !== AE && !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        const d = await redis(["GET", "data:" + tg]);
+        return res.json({ data: d ? JSON.parse(d) : null });
+      }
+      if (b.action === "getdiet") { const d = await redis(["GET", "diet:" + tg]); return res.json({ diet: d ? JSON.parse(d) : null }); }
+      if (b.action === "setdiet") {
+        if (tg !== AE && !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        const x = b.diet || {}, num = v => Math.max(0, Math.min(20000, Math.round(+v || 0)));
+        const diet = { kcal: num(x.kcal), p: num(x.p), c: num(x.c), f: num(x.f), text: String(x.text || "").slice(0, 10000) };
+        if (!diet.kcal && !diet.p && !diet.c && !diet.f && !diet.text.trim()) await redis(["DEL", "diet:" + tg]); else await redis(["SET", "diet:" + tg, JSON.stringify(diet)]);
+        return res.json({ ok: true });
+      }
       if (b.action === "getprogram") return res.json({ text: (await redis(["GET", "prog:" + String(b.email || "").trim().toLowerCase()])) || "" });
       if (b.action === "setprogram") {
         const t = String(b.email || "").trim().toLowerCase(), text = String(b.text || "");
@@ -93,3 +113,5 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: "Sunucu hatası" });
   }
 };
+
+
