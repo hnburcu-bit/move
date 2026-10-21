@@ -64,14 +64,19 @@ svg{width:100%;height:auto}
 .ck{min-width:112px}.ck.ok{background:var(--ac);color:#06201d;border:0;font-weight:700}.ck.no{background:var(--bad);color:#fff;border:0;font-weight:700}
 .week{display:flex;gap:6px;margin:8px 0}.dy{flex:1;text-align:center;border-radius:10px;padding:6px 0;background:rgba(255,255,255,.07)}.dy small{display:block;font-size:11px;color:inherit;opacity:.8}.dy b{font-size:18px}
 .dy.ok{background:var(--ac);color:#06201d}.dy.no{background:var(--bad);color:#fff}
-#login{background:linear-gradient(rgba(14,20,29,.55),rgba(14,20,29,.78)),url(bg3.jpg) center/cover no-repeat;overflow:hidden}
-@media (min-width:900px) and (min-aspect-ratio:1/1){#login{background-image:linear-gradient(rgba(14,20,29,.55),rgba(14,20,29,.78)),url(bg3w.jpg)}}
+#login{background:linear-gradient(rgba(14,20,29,.55),rgba(14,20,29,.78)),url(bg6.jpg) center/cover no-repeat,url(bg3.jpg) center/cover no-repeat;overflow:hidden}
+@media (min-width:900px) and (min-aspect-ratio:1/1){#login{background-image:linear-gradient(rgba(14,20,29,.55),rgba(14,20,29,.78)),url(bg6w.jpg),url(bg3w.jpg)}}
 #login .card{position:relative;z-index:1}
-.fx{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-.fi{position:absolute;bottom:-180px;color:rgba(255,255,255,.15);animation:drift linear infinite}
-.fi.t{color:rgba(46,196,182,.28)}.fi svg{width:100%;height:auto;display:block}
-@keyframes drift{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(-125vh) rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.fi{animation:none;bottom:auto;top:18%}}
+.fx{position:absolute;inset:0;display:grid;gap:5px;padding:5px;pointer-events:none}
+.fx>i{position:relative;display:block}
+.fx>i::before,.fx>i::after{content:"";position:absolute;inset:0;border-radius:9px}
+.fx>i::before{background:rgba(14,20,29,.82);animation:wv 7s ease-in-out infinite;animation-delay:var(--d)}
+.fx>i::after{border:1px solid rgba(46,196,182,.7);opacity:0;animation:ed 7s ease-in-out infinite;animation-delay:var(--d)}
+.fx svg{position:absolute;left:22%;top:22%;width:56%;height:56%;color:rgba(46,196,182,.8);opacity:0;animation:ic 7s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes wv{0%,100%{opacity:1}45%,55%{opacity:.06}}
+@keyframes ed{0%,100%{opacity:0}45%,55%{opacity:1}}
+@keyframes ic{0%,100%{opacity:0;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1) rotate(90deg)}}
+@media (prefers-reduced-motion:reduce){.fx>i::before,.fx>i::after,.fx svg{animation:none}.fx>i::before{opacity:.9}}
 details summary{cursor:pointer;color:var(--mut)}
 </style>
 </head>
@@ -147,8 +152,9 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.
 function render(){
   ["home","work","food","meas","acc"].forEach(t=>$("t-"+t).hidden=t!==tab);
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.t===tab));
-  const bn=({home:1,work:2,food:3,meas:4,acc:1})[tab],bo=({1:.18,2:.22,3:.15,4:.42})[bn];
-  $("bg").style.backgroundImage=`linear-gradient(rgba(27,36,51,${bo}),rgba(27,36,51,${bo})),url(bg${bn}${typeof matchMedia==="function"&&matchMedia("(min-width:900px) and (min-aspect-ratio:1/1)").matches?"w":""}.jpg)`;
+  const bn=({home:1,work:2,food:3,meas:4,acc:5})[tab],bo=({1:.18,2:.22,3:.15,4:.42,5:.12})[bn],fb=bn===5?1:bn;
+  const wd=typeof matchMedia==="function"&&matchMedia("(min-width:900px) and (min-aspect-ratio:1/1)").matches?"w":"";
+  $("bg").style.backgroundImage=`linear-gradient(rgba(27,36,51,${bo}),rgba(27,36,51,${bo})),url(bg${bn}${wd}.jpg),url(bg${fb}${wd}.jpg)`;
   ({home:renderHome,work:renderWork,food:renderFood,meas:renderMeas,acc:renderAcc})[tab]();
 }
 
@@ -394,15 +400,23 @@ async function renderAcc(){
   };
 }
 
-/* ---------- Giriş sahnesi ---------- */
+/* ---------- Giriş sahnesi (kare kare dalga) ---------- */
 (function(){
-  const I={
-   plate:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6"><circle cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="30"/><circle cx="50" cy="50" r="9" fill="currentColor"/></svg>',
-   db:'<svg viewBox="0 0 160 60" fill="currentColor"><rect x="4" y="8" width="16" height="44" rx="4"/><rect x="24" y="14" width="14" height="32" rx="4"/><rect x="38" y="26" width="84" height="8" rx="3"/><rect x="122" y="14" width="14" height="32" rx="4"/><rect x="140" y="8" width="16" height="44" rx="4"/></svg>',
-   kb:'<svg viewBox="0 0 100 110" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"><path d="M32 40C28 8 72 8 68 40"/><circle cx="50" cy="72" r="32" fill="currentColor" stroke="none"/></svg>'
-  };
-  const L=[["plate",6,90,24,0,0],["kb",22,70,30,-7,1],["db",38,130,27,-13,0],["plate",58,64,21,-4,1],["kb",72,96,32,-19,0],["db",86,110,25,-10,1],["plate",48,150,36,-22,0],["kb",12,60,28,-15,0],["plate",92,70,23,-2,0]];
-  $("fx").innerHTML=L.map(([k,x,w,d,dl,t])=>`<span class="fi${t?" t":""}" style="left:${x}%;width:${w}px;animation-duration:${d}s;animation-delay:${dl}s">${I[k]}</span>`).join("");
+  const I=[
+   '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7"><circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="27"/><circle cx="50" cy="50" r="8" fill="currentColor"/></svg>',
+   '<svg viewBox="0 0 160 60" fill="currentColor"><rect x="4" y="8" width="16" height="44" rx="4"/><rect x="24" y="14" width="14" height="32" rx="4"/><rect x="38" y="26" width="84" height="8" rx="3"/><rect x="122" y="14" width="14" height="32" rx="4"/><rect x="140" y="8" width="16" height="44" rx="4"/></svg>',
+   '<svg viewBox="0 0 100 110" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"><path d="M32 40C28 8 72 8 68 40"/><circle cx="50" cy="72" r="30" fill="currentColor" stroke="none"/></svg>'
+  ];
+  function build(){
+    const W=typeof innerWidth==="number"?innerWidth:390,H=typeof innerHeight==="number"?innerHeight:800,z=W>=900?100:62;
+    const cols=Math.max(3,Math.round(W/z)),rows=Math.max(3,Math.round(H/z)),f=$("fx");
+    f.style.gridTemplateColumns=`repeat(${cols},1fr)`;f.style.gridTemplateRows=`repeat(${rows},1fr)`;
+    let h="";
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const n=r*cols+c;h+=`<i style="--d:${((c+r)*.2).toFixed(2)}s">${(n*7+r*3)%9===0?I[(n+r)%3]:""}</i>`}
+    f.innerHTML=h;
+  }
+  build();
+  if(typeof addEventListener==="function"){let t;addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(build,300)})}
 })();
 
 /* ---------- Giriş ---------- */
