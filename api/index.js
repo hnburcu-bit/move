@@ -38,13 +38,27 @@ module.exports = async (req, res) => {
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
         const u = JSON.parse(rec);
-        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0 }), email, admin: false, name: u.name || "", surname: u.surname || "" });
+        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0, v: u.hash.slice(0, 8) }), email, admin: false, name: u.name || "", surname: u.surname || "" });
       }
       return res.status(401).json({ error: "E-posta veya şifre hatalı" });
     }
     const u = readToken(req.headers.authorization);
     if (!u) return res.status(401).json({ error: "Oturum bitti, tekrar giriş yap" });
+    if (!u.a) {
+      const rr = await redis(["HGET", "users", u.e]), rc = rr && JSON.parse(rr);
+      if (!rc || u.v !== rc.hash.slice(0, 8)) return res.status(401).json({ error: "Oturum bitti, tekrar giriş yap" });
+    }
     const key = "data:" + u.e;
+    if (b.action === "changepw") {
+      if (u.a) return res.status(400).json({ error: "Yönetici şifresi Vercel'deki ADMIN_PASSWORD ayarından değiştirilir" });
+      const np = String(b.password || "");
+      if (np.length < 6) return res.status(400).json({ error: "Yeni şifre en az 6 karakter olmalı" });
+      const rc = JSON.parse(await redis(["HGET", "users", u.e]));
+      if (!same(hashPw(String(b.current || ""), rc.salt), rc.hash)) return res.status(400).json({ error: "Mevcut şifre hatalı" });
+      const salt = crypto.randomBytes(16).toString("hex"), hash = hashPw(np, salt);
+      await redis(["HSET", "users", u.e, JSON.stringify({ ...rc, salt, hash })]);
+      return res.json({ ok: true, token: mkToken({ e: u.e, a: 0, v: hash.slice(0, 8) }) });
+    }
     if (b.action === "load") {
       const d = await redis(["GET", key]);
       return res.json({ data: d ? JSON.parse(d) : null });
@@ -75,6 +89,15 @@ module.exports = async (req, res) => {
         const a = (await redis(["HGETALL", "users"])) || [], list = [];
         for (let i = 0; i < a.length; i += 2) { let r = {}; try { r = JSON.parse(a[i + 1]); } catch (e) {} list.push({ email: a[i], name: r.name || "", surname: r.surname || "" }); }
         return res.json({ members: list });
+      }
+      if (b.action === "setpw") {
+        const np = String(b.password || ""), rr = tg === AE ? null : await redis(["HGET", "users", tg]);
+        if (tg === AE) return res.status(400).json({ error: "Yönetici şifresi Vercel'den değiştirilir" });
+        if (!rr) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        if (np.length < 6) return res.status(400).json({ error: "Şifre en az 6 karakter olmalı" });
+        const salt = crypto.randomBytes(16).toString("hex");
+        await redis(["HSET", "users", tg, JSON.stringify({ ...JSON.parse(rr), salt, hash: hashPw(np, salt) })]);
+        return res.json({ ok: true });
       }
       if (b.action === "memberdata") {
         if (tg !== AE && !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
