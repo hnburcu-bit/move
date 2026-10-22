@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#1b2433">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Move">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
 :root{--bg:#1b2433;--card:#243044;--line:#34435c;--tx:#eaf0f7;--mut:#9fb0c8;--ac:#2ec4b6;--kc:#ffb703;--bad:#ff6b6b}
 *{box-sizing:border-box}
@@ -83,12 +83,17 @@ svg{width:100%;height:auto}
 .b i{display:block;font-style:normal;font-size:28px;filter:grayscale(1)}.b.on i{filter:none}
 .b b{display:block;font-size:13px;line-height:1.15}.b small{color:var(--mut);font-size:11px}
 #mBack{margin-bottom:10px}
+#tm{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(64px + env(safe-area-inset-bottom));z-index:40;width:min(92%,420px);background:rgba(36,48,68,.97);border:1px solid var(--ac);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+#tm .bar{flex:1;margin:0}#tm b{font-size:22px}
+.wb{min-width:44px;font-size:18px}
+.chips.fav button{text-transform:none;font-family:inherit;letter-spacing:0}
 details summary{cursor:pointer;color:var(--mut)}
 </style>
 </head>
 <body>
 <div id="bg" aria-hidden="true"></div>
 <div id="lb" hidden></div>
+<div id="tm" hidden></div>
 <main>
 <div id="login" hidden><div class="fx" id="fx" aria-hidden="true"></div><div class="card"><h1>Move</h1><input id="lEm" type="email" autocomplete="username" placeholder="E-posta" style="width:100%;margin-bottom:8px"><input id="lPw" type="password" autocomplete="current-password" placeholder="Şifre" style="width:100%"><div class="err" id="lErr"></div><button class="pri" id="lGo" style="width:100%">Giriş yap</button></div></div>
 <input type="date" id="date" class="date" aria-label="Tarih"><div id="sync"></div>
@@ -122,10 +127,49 @@ const FOODS={
 "Mercimek (pişmiş)":[116,9,20,0.4],"Nohut (pişmiş)":[164,8.9,27,2.6],"Kuru fasulye (pişmiş)":[127,8.7,22.8,0.5],
 "Zeytinyağı":[884,0,0,100],"Zeytin":[115,0.8,6,11],"Avokado":[160,2,8.5,15],
 "Fıstık ezmesi":[588,25,20,50],"Badem":[579,21,22,50],"Ceviz":[654,15,14,65],
-"Bal":[304,0.3,82,0],"Sütlü çikolata":[535,7.7,59,30],"Whey protein":[400,80,8,6]
+"Bal":[304,0.3,82,0],"Sütlü çikolata":[535,7.7,59,30],"Whey protein":[400,80,8,6],
+"Yumurta akı":[52,11,0.7,0.2],"Sahanda yumurta":[196,14,1,15],"Omlet":[154,11,1,12],"Menemen":[130,7,5,9],
+"Çavdar ekmeği":[259,8.5,48,3.3],"Simit":[290,9,55,4.5],"Poğaça":[330,8,38,16],"Lahmacun":[220,10,28,7],"Pide (kıymalı)":[250,11,30,9],
+"Peynirli börek":[280,10,25,16],"Gözleme (peynirli)":[260,9,30,11],"Tost (kaşarlı)":[290,13,28,14],"Mantı (haşlanmış)":[190,8,28,5],
+"Izgara köfte":[250,20,5,17],"Adana kebap":[290,18,2,23],"Tavuk şiş":[170,28,2,5],"Döner (et)":[270,24,3,18],"Tavuk döner":[200,24,3,10],
+"Mercimek çorbası":[65,3.5,9,2],"Ezogelin çorbası":[70,3,11,1.5],"Tarhana çorbası":[55,2,8,1.5],"Domates çorbası":[45,1,7,1.5],
+"Karnıyarık":[150,6,7,11],"İmam bayıldı":[120,2,8,9],"Zeytinyağlı yaprak sarma":[170,3,22,8],"Etli sebze yemeği":[90,4,8,4.5],
+"Çiğköfte":[170,4,30,4],"Humus":[166,8,14,10],"Cacık":[45,2.5,3.5,2.5],"Çoban salata":[40,1,5,2],
+"Sütlaç":[130,3.5,22,3],"Baklava":[430,6,50,24],"Künefe":[330,8,38,17],"Tahin helvası":[520,12,50,30],"Lokum":[330,0.2,80,0.1],"Revani":[330,4,55,10],
+"Kaşar peyniri":[330,25,1.5,25],"Tulum peyniri":[330,20,2,27],"Labne":[200,6,4,18],"Süzme yoğurt":[110,9,4,6],"Kefir":[55,3.5,4.5,2.5],"Süt (yağsız)":[35,3.4,5,0.1],
+"Tereyağı":[717,0.9,0.1,81],"Tahin":[595,17,21,54],"Pekmez":[290,1,72,0],"Reçel":[250,0.4,62,0.1],
+"Fındık":[628,15,17,61],"Yer fıstığı":[567,26,16,49],"Antep fıstığı":[560,20,28,45],"Kuru üzüm":[299,3,79,0.5],"Kuru kayısı":[241,3.4,63,0.5],"Hurma":[282,2.5,75,0.4],"Kuru incir":[249,3.3,64,0.9],
+"Üzüm":[69,0.7,18,0.2],"Karpuz":[30,0.6,7.6,0.2],"Kavun":[34,0.8,8,0.2],"Çilek":[32,0.7,7.7,0.3],"Kiraz":[63,1,16,0.2],"Şeftali":[39,0.9,9.5,0.3],
+"Mandalina":[53,0.8,13,0.3],"Armut":[57,0.4,15,0.1],"Nar":[83,1.7,19,1.2],"Kivi":[61,1.1,15,0.5],"Ananas":[50,0.5,13,0.1],
+"Patlıcan":[25,1,6,0.2],"Biber":[20,0.9,4.6,0.2],"Havuç":[41,0.9,10,0.2],"Ispanak":[23,2.9,3.6,0.4],"Marul":[15,1.4,2.9,0.2],"Kabak":[17,1.2,3.1,0.3],"Mantar":[22,3.1,3.3,0.3],"Soğan":[40,1.1,9.3,0.1],
+"Granola":[471,10,64,20],"Mısır gevreği":[357,7.5,84,0.4],"Bisküvi":[450,7,70,16],"Gofret":[500,5,62,27],"Cips":[536,7,53,34],"Patates kızartması":[312,3.4,41,15],
+"Hamburger":[250,12,25,11],"Pizza":[270,11,33,10],"Kinoa (pişmiş)":[120,4.4,21,1.9],"Esmer pirinç (pişmiş)":[112,2.3,24,0.8],"Tam buğday makarna (pişmiş)":[124,5.3,25,0.5],"Mısır (haşlanmış)":[96,3.4,21,1.5],
+"Sardalya":[208,25,0,11],"Hamsi (tava)":[210,20,6,12],"Levrek (ızgara)":[130,24,0,3],"Çupra (ızgara)":[140,20,0,6],"Uskumru":[205,19,0,14],
+"Tavuk but (derisiz)":[190,26,0,9],"Hindi göğüs":[135,30,0,1],"Kuzu eti (pişmiş)":[290,25,0,21],"Sucuk":[450,20,3,40],"Pastırma":[240,33,1,12],
+"Portakal suyu":[45,0.7,10,0.2],"Kola":[42,0,10.6,0],"Protein bar":[370,30,35,12]
+};
+const PORT={
+"Yumurta (haşlanmış)":[["1 adet",50]],"Yumurta akı":[["1 adet",33]],"Sahanda yumurta":[["1 adet",46]],"Omlet":[["1 porsiyon (2 yumurta)",110]],"Menemen":[["1 porsiyon",200]],
+"Beyaz ekmek":[["1 dilim",30]],"Tam buğday ekmeği":[["1 dilim",30]],"Çavdar ekmeği":[["1 dilim",30]],"Simit":[["1 adet",110]],"Poğaça":[["1 adet",70]],"Lahmacun":[["1 adet",130]],
+"Pide (kıymalı)":[["1 dilim",110]],"Peynirli börek":[["1 dilim",100]],"Gözleme (peynirli)":[["1 adet",200]],"Tost (kaşarlı)":[["1 adet",150]],
+"Pirinç pilavı (pişmiş)":[["1 kase",180],["1 yemek kaşığı",20]],"Bulgur pilavı (pişmiş)":[["1 kase",180],["1 yemek kaşığı",20]],"Makarna (pişmiş)":[["1 tabak",200]],"Tam buğday makarna (pişmiş)":[["1 tabak",200]],
+"Mercimek çorbası":[["1 kase",250],["1 kepçe",150]],"Ezogelin çorbası":[["1 kase",250],["1 kepçe",150]],"Tarhana çorbası":[["1 kase",250]],"Domates çorbası":[["1 kase",250]],
+"Süt (tam yağlı)":[["1 bardak",200]],"Süt (yağsız)":[["1 bardak",200]],"Yoğurt (tam yağlı)":[["1 kase",150],["1 yemek kaşığı",20]],"Ayran":[["1 bardak",200]],"Kefir":[["1 bardak",200]],
+"Beyaz peynir":[["1 dilim",30],["1 kibrit kutusu",40]],"Kaşar peyniri":[["1 dilim",20]],"Zeytin":[["1 adet",4],["1 avuç (10 adet)",40]],"Zeytinyağı":[["1 yemek kaşığı",10],["1 tatlı kaşığı",5]],
+"Tereyağı":[["1 tatlı kaşığı",5],["1 yemek kaşığı",12]],"Bal":[["1 tatlı kaşığı",8],["1 yemek kaşığı",20]],"Reçel":[["1 tatlı kaşığı",10]],"Pekmez":[["1 yemek kaşığı",20]],"Tahin":[["1 yemek kaşığı",15]],"Fıstık ezmesi":[["1 yemek kaşığı",16]],
+"Badem":[["1 avuç",28]],"Ceviz":[["1 avuç",30]],"Fındık":[["1 avuç",30]],"Kuru üzüm":[["1 avuç",30]],"Kuru kayısı":[["1 adet",8]],"Hurma":[["1 adet",8]],"Kuru incir":[["1 adet",20]],
+"Muz":[["1 adet",120]],"Elma":[["1 adet",180]],"Portakal":[["1 adet",180]],"Mandalina":[["1 adet",80]],"Armut":[["1 adet",180]],"Şeftali":[["1 adet",150]],"Kivi":[["1 adet",75]],"Nar":[["1 adet",250]],
+"Üzüm":[["1 avuç",100]],"Çilek":[["1 kase",150]],"Karpuz":[["1 dilim",300]],"Kavun":[["1 dilim",250]],
+"Domates":[["1 adet",120]],"Salatalık":[["1 adet",100]],"Havuç":[["1 adet",70]],"Soğan":[["1 adet",100]],"Patates (haşlanmış)":[["1 adet",150]],"Tatlı patates":[["1 adet",150]],
+"Tavuk göğsü (pişmiş)":[["1 porsiyon",150]],"Ton balığı (suda)":[["1 kutu",120]],"Izgara köfte":[["1 adet",35],["1 porsiyon (4 köfte)",140]],"Mantı (haşlanmış)":[["1 porsiyon",250]],
+"Döner (et)":[["1 porsiyon",150]],"Tavuk döner":[["1 porsiyon",150]],"Adana kebap":[["1 porsiyon",150]],"Tavuk şiş":[["1 porsiyon",150]],
+"Baklava":[["1 dilim",50]],"Künefe":[["1 porsiyon",150]],"Sütlaç":[["1 kase",150]],"Lokum":[["1 adet",12]],"Tahin helvası":[["1 dilim",30]],
+"Whey protein":[["1 ölçek",30]],"Yulaf ezmesi (kuru)":[["1 kase",40],["1 yemek kaşığı",10]],"Sütlü çikolata":[["1 kare",8],["1 küçük bar",40]],"Gofret":[["1 adet",35]],
+"Hamburger":[["1 adet",200]],"Pizza":[["1 dilim",110]],"Cips":[["1 küçük paket",40]],"Patates kızartması":[["1 porsiyon",150]],"Humus":[["1 kase",100]],"Cacık":[["1 kase",150]],
+"Zeytinyağlı yaprak sarma":[["1 adet",30]],"Karnıyarık":[["1 adet",200]],"İmam bayıldı":[["1 adet",180]],"Çiğköfte":[["1 porsiyon",100]],"Sucuk":[["1 dilim",10]],"Protein bar":[["1 adet",60]]
 };
 const LEGACY="spor-takip-v1",TK="move-session";
-const EMPTY=()=>({work:{},meals:{},weights:[],custom:{},goal:2500,meas:[],profile:{},tpl:[],checks:{}});
+const EMPTY=()=>({work:{},meals:{},weights:[],custom:{},goal:2500,meas:[],profile:{},tpl:[],checks:{},water:{}});
 let S=EMPTY(),SES=JSON.parse(localStorage.getItem(TK)||"null"),timer;
 async function api(action,body){
   const r=await fetch("/api",{method:"POST",headers:{"Content-Type":"application/json",...(SES?{Authorization:"Bearer "+SES.token}:{})},body:JSON.stringify({action,...body})});
@@ -133,19 +177,38 @@ async function api(action,body){
   if(!r.ok){if(r.status===401&&SES&&action!=="login")logout();throw new Error(j.error||"Bağlantı hatası")}
   return j;
 }
+const CHK=["work","meals","checks","water"];
+let SYNC={core:null,months:{}};
+function splitS(){
+  const core={...S};CHK.forEach(k=>delete core[k]);
+  const months={};
+  CHK.forEach(k=>Object.keys(S[k]||{}).forEach(d=>{
+    const v=S[k][d];if(Array.isArray(v)&&!v.length)return;
+    const m=d.slice(0,7),o=months[m]=months[m]||{};(o[k]=o[k]||{})[d]=v;
+  }));
+  return{core,months};
+}
 function save(){
   if(!SES)return;
   localStorage.setItem("move-data-"+SES.email,JSON.stringify(S));
   $("sync").textContent="Kaydediliyor...";
-  clearTimeout(timer);
-  timer=setTimeout(()=>api("save",{data:S}).then(()=>$("sync").textContent="Kaydedildi").catch(()=>$("sync").textContent="Kaydedilemedi, internetini kontrol et"),500);
+  clearTimeout(timer);timer=setTimeout(flush,500);
+}
+async function flush(){
+  const {core,months}=splitS(),body={months:{}},cs=JSON.stringify(core),ms={};
+  if(cs!==SYNC.core)body.core=core;
+  Object.keys(months).forEach(m=>{ms[m]=JSON.stringify(months[m]);if(ms[m]!==SYNC.months[m])body.months[m]=months[m]});
+  Object.keys(SYNC.months).forEach(m=>{if(!(m in ms))body.months[m]=null});
+  if(!body.core&&!Object.keys(body.months).length){$("sync").textContent="";return}
+  try{await api("savex",body);SYNC={core:cs,months:ms};$("sync").textContent="Kaydedildi"}
+  catch(e){$("sync").textContent="Kaydedilemedi, internetini kontrol et"}
 }
 function fixS(){
   S.meas=S.meas||(S.weights||[]).map(w=>({date:w.date,kg:w.kg}));
-  S.profile=S.profile||{};S.tpl=S.tpl||[];S.checks=S.checks||{};
+  S.profile=S.profile||{};S.tpl=S.tpl||[];S.checks=S.checks||{};S.water=S.water||{};
   if(SES&&!S.profile.name&&SES.name){S.profile.name=SES.name;S.profile.surname=SES.surname||""}
 }
-function logout(){PROG=null;DIET=undefined;MEM={list:null,sel:null,pack:null,cm:"kg"};localStorage.removeItem(TK);SES=null;S=EMPTY();$("login").hidden=false}
+function logout(){PROG=null;DIET=undefined;NOTE=undefined;SYNC={core:null,months:{}};MEM={list:null,sel:null,pack:null,cm:"kg"};localStorage.removeItem(TK);SES=null;S=EMPTY();$("login").hidden=false}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const r1=n=>Math.round(n*10)/10;
@@ -190,6 +253,40 @@ async function loadProg(){
   });
 }
 
+/* ---------- Rekor, geçmiş, zamanlayıcı ---------- */
+function isPR(w,d){
+  const k=w.ex.toLowerCase(),kg=+w.kg||0;if(kg<=0)return false;let mx=-1;
+  Object.keys(S.work).forEach(x=>{if(x<d)S.work[x].forEach(e=>{if(e.ex.toLowerCase()===k)mx=Math.max(mx,+e.kg||0)})});
+  return mx>0&&kg>mx;
+}
+function exNames(){const o={};Object.values(S.work).flat().forEach(e=>{const k=e.ex.toLowerCase();if(!o[k])o[k]=e.ex});return Object.values(o).sort()}
+function exSeries(name){
+  const k=name.toLowerCase(),out=[];
+  Object.keys(S.work).sort().forEach(d=>{const L=S.work[d].filter(e=>e.ex.toLowerCase()===k);if(L.length)out.push({date:d,v:Math.max(0,...L.map(e=>+e.kg||0))})});
+  return out;
+}
+function showEx(){
+  const out=$("exOut");if(!out)return;
+  const sr=exSeries($("exSel").value);if(!sr.length){out.innerHTML="";return}
+  const v=sr.map(x=>x.v),best=Math.max(...v),last=v[v.length-1],fark=r1(last-v[0]);
+  out.innerHTML=chartSvgS(sr)+`<div class="macros" style="margin-top:6px"><span>En yüksek <b>${best} kg</b></span><span>Son <b>${last} kg</b></span><span>Başlangıçtan <b>${fark>0?"+":""}${fark} kg</b></span><span><b>${sr.length}</b> antrenman</span></div>`;
+}
+let TM={end:0,tot:0,iv:null,ac:null};
+function beep(){
+  try{const c=TM.ac;[0,.25,.5].forEach(t=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.25;o.connect(g);g.connect(c.destination);o.start(c.currentTime+t);o.stop(c.currentTime+t+.15)})}catch(e){}
+}
+function tmStart(sec){
+  try{if(!TM.ac){const A=window.AudioContext||window.webkitAudioContext;TM.ac=new A()}if(TM.ac.resume)TM.ac.resume()}catch(e){}
+  TM.tot=sec;TM.end=Date.now()+sec*1000;clearInterval(TM.iv);TM.iv=setInterval(tmTick,250);tmTick();
+}
+function tmStop(){clearInterval(TM.iv);TM.end=0;$("tm").hidden=true}
+function tmTick(){
+  const left=Math.max(0,Math.ceil((TM.end-Date.now())/1000)),el=$("tm");el.hidden=false;
+  el.innerHTML=`<span>⏱ <b>${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}</b></span><div class="bar"><i style="width:${(1-left/TM.tot)*100}%"></i></div><button id="tmX">Durdur</button>`;
+  $("tmX").onclick=tmStop;
+  if(left<=0){clearInterval(TM.iv);beep();try{if(navigator.vibrate)navigator.vibrate([300,150,300])}catch(e){}setTimeout(tmStop,2500)}
+}
+
 /* ---------- Şablonlar ---------- */
 const TPL0=[
 {id:"g",name:"Göğüs + Triceps",items:[["Bench press",4,8],["Incline dumbbell press",3,10],["Cable fly",3,12],["Triceps pushdown",3,12],["Dips",3,10]]},
@@ -209,19 +306,23 @@ function renderWork(){
   <div id="progBox"></div>
   <div class="card"><b>Şablondan ekle</b><div class="row" style="margin-top:8px"><select id="tSel">${allTpl().map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select><button class="pri" id="tAdd" style="flex:0 0 auto">Ekle</button></div>
   <details><summary>Şablon kaydet / sil</summary><div class="row" style="margin-top:8px"><input id="tNm" placeholder="Şablon adı"><button id="tSave" style="flex:0 0 auto">Bugünkünü kaydet</button></div><button id="tDel" style="width:100%">Seçili şablonu sil</button></details></div>
+  <div class="card"><b>Dinlenme zamanlayıcısı</b><div class="row" style="margin-top:8px">${[30,60,90,120,180].map(x=>`<button class="tmb" data-s="${x}">${x<120?x+" sn":x/60+" dk"}</button>`).join("")}</div></div>
   <div class="card">
     <input id="wEx" placeholder="Hareket (örn. Bench press)" list="exs" style="width:100%;margin-bottom:8px">
     <datalist id="exs">${[...new Set(Object.values(S.work).flat().map(w=>w.ex))].map(e=>`<option value="${esc(e)}">`).join("")}</datalist>
     <div class="row"><input id="wSet" type="number" inputmode="numeric" placeholder="Set"><input id="wRep" type="number" inputmode="numeric" placeholder="Tekrar"><input id="wKg" type="number" inputmode="decimal" placeholder="Kg"></div>
     <button class="pri" id="wAdd" style="width:100%">Hareketi ekle</button>
   </div>
-  <div class="card">${list.length?list.map((w,i)=>`<div class="item"><div class="n">${esc(w.ex)}<small>${w.sets} set × ${w.reps} tekrar · ${w.kg} kg · hacim ${w.sets*w.reps*w.kg} kg</small></div><button class="x" data-i="${i}" aria-label="Sil">Sil</button></div>`).join(""):`<div class="empty">Bu gün için hareket yok. Yukarıdan ilk hareketi ekle.</div>`}</div>`;
+  <div class="card">${list.length?list.map((w,i)=>`<div class="item"><div class="n">${esc(w.ex)}<small>${w.sets} set × ${w.reps} tekrar · ${w.kg} kg · hacim ${w.sets*w.reps*w.kg} kg${isPR(w,d)?" · 🚀 Rekor":""}</small></div><button class="x" data-i="${i}" aria-label="Sil">Sil</button></div>`).join(""):`<div class="empty">Bu gün için hareket yok. Yukarıdan ilk hareketi ekle.</div>`}</div>
+  ${exNames().length?`<h2>Hareket geçmişi</h2><div class="card"><select id="exSel" style="width:100%;margin-bottom:8px">${exNames().map(n=>`<option>${esc(n)}</option>`).join("")}</select><div id="exOut"></div></div>`:""}`;
   $("wAdd").onclick=()=>{
     const ex=$("wEx").value.trim(),sets=+$("wSet").value,reps=+$("wRep").value,kg=+$("wKg").value||0;
     if(!ex||!sets||!reps)return alert("Hareket adı, set ve tekrar gerekli.");
     (S.work[d]=S.work[d]||[]).push({ex,sets,reps,kg});save();renderWork();
   };
   loadProg();
+  document.querySelectorAll("#t-work .tmb").forEach(b=>b.onclick=()=>tmStart(+b.dataset.s));
+  if($("exSel")){$("exSel").onchange=showEx;showEx()}
   $("tAdd").onclick=()=>{
     const t=allTpl().find(x=>x.id===$("tSel").value);if(!t)return;
     (S.work[d]=S.work[d]||[]).push(...t.items.map(i=>({ex:i.ex,sets:i.sets,reps:i.reps,kg:lastKg(i.ex)||i.kg||0})));save();renderWork();
@@ -239,6 +340,15 @@ function renderWork(){
 
 /* ---------- Yemek ---------- */
 function calc(name,g){const f=allFoods()[name];if(!f)return null;const k=g/100;return{kcal:Math.round(f[0]*k),p:r1(f[1]*k),c:r1(f[2]*k),f:r1(f[3]*k)}}
+let FAV=[],FAVPREV=null;
+function favCard(d){
+  const cnt={};
+  Object.keys(S.meals).sort().reverse().slice(0,60).forEach(x=>S.meals[x].forEach(m=>{const k=m.name+"|"+m.g+"|"+(m.q||"");(cnt[k]=cnt[k]||{name:m.name,g:m.g,q:m.q||"",n:0}).n++}));
+  FAV=Object.values(cnt).filter(f=>allFoods()[f.name]).sort((a,b)=>b.n-a.n).slice(0,8);
+  FAVPREV=Object.keys(S.meals).filter(x=>x<d&&S.meals[x].length).sort().pop()||null;
+  if(!FAV.length&&!FAVPREV)return"";
+  return `<h2>Hızlı ekle</h2><div class="card">${FAVPREV?`<button id="fCopy" style="width:100%;margin-bottom:8px">${FAVPREV} gününü kopyala (${S.meals[FAVPREV].length} yemek)</button>`:""}${FAV.length?`<small style="color:var(--mut)">Sık yediklerin (seçili öğüne eklenir)</small><div class="chips fav" id="fFav">${FAV.map((f,i)=>`<button data-i="${i}">${esc(f.name)} · ${f.q?esc(f.q):f.g+" g"}</button>`).join("")}</div>`:""}</div>`;
+}
 function renderFood(){
   const d=$("date").value,list=S.meals[d]||[];
   const T=list.reduce((a,m)=>({kcal:a.kcal+m.kcal,p:a.p+m.p,c:a.c+m.c,f:a.f+m.f}),{kcal:0,p:0,c:0,f:0});
@@ -250,27 +360,34 @@ function renderFood(){
     <div class="macros"><span>Protein <b>${r1(T.p)} g</b></span><span>Karb. <b>${r1(T.c)} g</b></span><span>Yağ <b>${r1(T.f)} g</b></span></div>
     <div class="row" style="margin:10px 0 0"><input id="goal" type="number" inputmode="numeric" value="${S.goal}" aria-label="Günlük kalori hedefi"><button id="goalSave">Hedefi kaydet</button></div></div>
   ${dietCard(T)}
+  ${favCard(d)}
   <div class="card">
     <input id="fName" list="fl" placeholder="Yiyecek ara (örn. Tavuk göğsü)" style="width:100%;margin-bottom:8px">
     <datalist id="fl">${Object.keys(allFoods()).sort().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
-    <div class="row"><input id="fG" type="number" inputmode="decimal" placeholder="Gram"><select id="fM">${meals.map(m=>`<option>${m}</option>`).join("")}</select></div>
+    <div class="row"><input id="fG" type="number" inputmode="decimal" placeholder="Miktar"><select id="fU" style="flex:1.6"><option value="1">gram</option></select></div>
+    <select id="fM" style="width:100%;margin-bottom:8px">${meals.map(m=>`<option>${m}</option>`).join("")}</select>
     <div class="prev" id="prev"></div>
     <button class="pri" id="fAdd" style="width:100%">Yemeği ekle</button>
   </div>
-  <div class="card">${list.length?list.map((m,i)=>`<div class="item"><div class="n">${esc(m.name)} · ${m.g} g<small>${esc(m.meal)} · P ${m.p} · K ${m.c} · Y ${m.f}</small></div><b>${m.kcal} kcal</b><button class="x" data-i="${i}" aria-label="Sil">Sil</button></div>`).join(""):`<div class="empty">Bu gün için yemek yok.</div>`}</div>
+  <div class="card">${list.length?list.map((m,i)=>`<div class="item"><div class="n">${esc(m.name)} · ${m.q?esc(m.q)+" ("+m.g+" g)":m.g+" g"}<small>${esc(m.meal)} · P ${m.p} · K ${m.c} · Y ${m.f}</small></div><b>${m.kcal} kcal</b><button class="x" data-i="${i}" aria-label="Sil">Sil</button></div>`).join(""):`<div class="empty">Bu gün için yemek yok.</div>`}</div>
   <details class="card"><summary>Listede olmayan yiyecek ekle (100 g değerleri)</summary>
     <input id="cN" placeholder="Yiyecek adı" style="width:100%;margin:8px 0">
     <div class="row"><input id="cK" type="number" inputmode="decimal" placeholder="Kcal"><input id="cP" type="number" inputmode="decimal" placeholder="Protein"></div>
     <div class="row"><input id="cC" type="number" inputmode="decimal" placeholder="Karb."><input id="cF" type="number" inputmode="decimal" placeholder="Yağ"></div>
     <button id="cAdd" style="width:100%">Yiyeceği kaydet</button></details>`;
-  const upd=()=>{const r=calc($("fName").value,+$("fG").value);$("prev").textContent=r?`${r.kcal} kcal · P ${r.p} · K ${r.c} · Y ${r.f}`:""};
-  $("fName").oninput=upd;$("fG").oninput=upd;
+  const gm=()=>(+$("fG").value||0)*(+$("fU").value||1);
+  const upd=()=>{const r=calc($("fName").value,gm());$("prev").textContent=r?`${Math.round(gm())} g · ${r.kcal} kcal · P ${r.p} · K ${r.c} · Y ${r.f}`:""};
+  const unitSel=()=>{const U=PORT[$("fName").value]||[];$("fU").innerHTML=U.map(([l,g])=>`<option value="${g}">${esc(l.replace(/^1 /,""))} (${g} g)</option>`).join("")+`<option value="1">gram</option>`;if(U.length)$("fU").value=String(U[0][1])};
+  $("fName").oninput=()=>{unitSel();upd()};$("fG").oninput=upd;$("fU").onchange=upd;
+  if($("fCopy"))$("fCopy").onclick=()=>{(S.meals[d]=S.meals[d]||[]).push(...S.meals[FAVPREV].map(x=>({...x})));save();renderFood()};
+  document.querySelectorAll("#fFav button").forEach(b=>b.onclick=()=>{const f=FAV[+b.dataset.i],r=calc(f.name,f.g);if(!r)return;(S.meals[d]=S.meals[d]||[]).push({name:f.name,g:f.g,meal:$("fM").value,...(f.q?{q:f.q}:{}),...r});save();renderFood()});
   $("goalSave").onclick=()=>{S.goal=+$("goal").value||2500;save();renderFood()};
   $("fAdd").onclick=()=>{
-    const name=$("fName").value,g=+$("fG").value,r=calc(name,g);
+    const name=$("fName").value,q=+$("fG").value,u=+$("fU").value||1,g=Math.round(q*u*10)/10,r=calc(name,g);
     if(!r)return alert("Bu yiyecek listede yok. Aşağıdan kendi yiyeceğini ekleyebilirsin.");
-    if(!g)return alert("Gram gir.");
-    (S.meals[d]=S.meals[d]||[]).push({name,g,meal:$("fM").value,...r});save();renderFood();
+    if(!q)return alert("Miktar gir.");
+    const P=(PORT[name]||[]).find(x=>x[1]===u),qd=P?q+" "+P[0].replace(/^1 /,""):"";
+    (S.meals[d]=S.meals[d]||[]).push({name,g,meal:$("fM").value,...(qd?{q:qd}:{}),...r});save();renderFood();
   };
   $("cAdd").onclick=()=>{
     const n=$("cN").value.trim();if(!n||!$("cK").value)return alert("Ad ve kcal gerekli.");
@@ -282,9 +399,9 @@ function renderFood(){
 /* ---------- Kontrol listesi ---------- */
 const MEALS=["Kahvaltı","Öğle","Akşam","Ara öğün"];
 function chkCard(d){
-  const c=S.checks[d]||{},m=c.m||{};
+  const c=S.checks[d]||{},m=c.m||{},wn=S.water[d]||0;
   const row=(k,l,v)=>`<div class="item"><div class="n">${l}</div><button class="ck ${v===true?"ok":v===false?"no":""}" data-k="${k}">${v===true?"✓ Yaptım":v===false?"✗ Yapmadım":"Seç"}</button></div>`;
-  return `<h2>Bugünün kontrolü</h2><div class="card"><small style="color:var(--mut)">${d}</small>${row("w","Antrenman",c.w)}${MEALS.map(x=>row("m:"+x,x+(x==="Ara öğün"?"":" yemeği"),m[x])).join("")}</div>`;
+  return `<h2>Bugünün kontrolü</h2><div class="card"><small style="color:var(--mut)">${d}</small>${row("w","Antrenman",c.w)}${MEALS.map(x=>row("m:"+x,x+(x==="Ara öğün"?"":" yemeği"),m[x])).join("")}<div class="item"><div class="n">💧 Su<small>${wn} / 8 bardak · ${wn*250} ml</small></div><button class="wb" data-d="-1" aria-label="Azalt">−</button><button class="wb" data-d="1" aria-label="Artır">+</button></div></div>`;
 }
 function toggleChk(d,k){
   const c=S.checks[d]=S.checks[d]||{w:null,m:{}};c.m=c.m||{};
@@ -330,6 +447,7 @@ function renderHome(){
   const wk=days.map(x=>{const c=S.checks[x]||{};return[new Date(x).toLocaleDateString("tr-TR",{weekday:"short"}),c.w===true||(c.w==null&&(S.work[x]||[]).length)?"ok":c.w===false?"no":""]});
   let ate=0,miss=0;days.forEach(x=>Object.values((S.checks[x]||{}).m||{}).forEach(v=>{if(v===true)ate++;else if(v===false)miss++}));
   $("t-home").innerHTML=`${heroBox("lift",name||"Move","Hoş geldin")}
+  ${noteCard()}
   ${chkCard($("date").value)}
   <details class="card" ${name?"":"open"}><summary>Profil (ad, soyad)</summary><div class="row" style="margin-top:8px"><input id="pN" placeholder="Ad" value="${esc(P.name||"")}"><input id="pS" placeholder="Soyad" value="${esc(P.surname||"")}"></div><button id="pSave" style="width:100%">Kaydet</button></details>
   ${have.length?`<h2>Son ölçümlerin</h2><div class="grid">${cards}${bmiCard}</div>
@@ -338,6 +456,8 @@ function renderHome(){
   <h2>Son 7 gün</h2><div class="card"><div class="week">${wk.map(w=>`<div class="dy ${w[1]}"><small>${w[0]}</small><b>${w[1]==="ok"?"✓":w[1]==="no"?"✗":"·"}</b></div>`).join("")}</div><div class="macros"><span>Antrenman <b>${wk.filter(w=>w[1]==="ok").length}/7 gün</b></span><span>Öğün <b>${ate} yendi, ${miss} atlandı</b></span><span>Ort. kalori <b>${Math.round(kc.reduce((a,b)=>a+b,0)/7)}</b></span></div></div>
   ${badgeCard(S)}`;
   document.querySelectorAll("#t-home .ck").forEach(b=>b.onclick=()=>{toggleChk($("date").value,b.dataset.k);renderHome()});
+  document.querySelectorAll("#t-home .wb").forEach(b=>b.onclick=()=>{const d=$("date").value;S.water[d]=Math.max(0,(S.water[d]||0)+ +b.dataset.d);save();renderHome()});
+  if($("noteOk"))$("noteOk").onclick=async()=>{try{await api("readnote");NOTE.read=true;renderHome()}catch(e){}};
   $("pSave").onclick=()=>{S.profile.name=$("pN").value.trim();S.profile.surname=$("pS").value.trim();save();renderHome()};
   document.querySelectorAll("#t-home .chips button").forEach(b=>b.onclick=()=>{cm=b.dataset.k;renderHome()});
   if($("goM"))$("goM").onclick=()=>{tab="meas";render()};
@@ -436,6 +556,14 @@ function dietCard(T){
 }
 
 /* ---------- Üyeler (koç paneli) ---------- */
+let NOTE;
+async function loadNote(){NOTE=null;try{NOTE=(await api("mynote")).note||null}catch(e){}if(tab==="home")renderHome()}
+function noteCard(){
+  if(NOTE===undefined){loadNote();return""}
+  if(!NOTE||NOTE.read)return"";
+  return `<h2>Koçundan not</h2><div class="card"><div style="white-space:pre-wrap">${esc(NOTE.text)}</div><small style="color:var(--mut)">${new Date(NOTE.ts).toLocaleDateString("tr-TR")}</small><button id="noteOk" style="width:100%;margin-top:8px">Okudum</button></div>`;
+}
+function dl(name,obj){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:"application/json"}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
 let MEM={list:null,sel:null,pack:null,cm:"kg"};
 const PHM={};
 const getPhM=async(e,d)=>PHM[e+d]||(PHM[e+d]=(await api("photoget",{date:d,email:e})).img);
@@ -453,13 +581,25 @@ async function renderMem(){
   const el=$("t-mem");
   if(!MEM.sel){
     el.innerHTML=`<h1>Üyeler</h1><div class="card" id="mlist">Yükleniyor...</div>`;
-    try{if(!MEM.list)MEM.list=(await api("members")).members}catch(e){$("mlist").textContent=e.message;return}
-    const L=[{email:SES.email,name:(S.profile||{}).name||"",surname:(S.profile||{}).surname||"",self:true},...MEM.list];
-    $("mlist").innerHTML=L.map((m,i)=>`<div class="item" data-i="${i}" style="cursor:pointer"><div class="n">${esc([m.name,m.surname].filter(Boolean).join(" ")||m.email)}<small>${esc(m.email)}${m.self?" · ben":""}</small></div><b>›</b></div>`).join("");
-    document.querySelectorAll("#mlist .item").forEach(it=>it.onclick=()=>{MEM.sel=L[+it.dataset.i];MEM.pack=null;renderMem()});
+    try{if(!MEM.list)MEM.list=(await api("summary",{today:isoD(new Date())})).members}catch(e){$("mlist").textContent=e.message;return}
+    const today=isoD(new Date()),ago=x=>x?Math.round((new Date(today)-new Date(x))/864e5):null;
+    const L=MEM.list.map(x=>({...x,ag:ago(x.last)}));
+    L.sort(MEM.sort==="name"?(a,b)=>(a.name+a.email).localeCompare(b.name+b.email):(a,b)=>(b.ag==null?9999:b.ag)-(a.ag==null?9999:a.ag));
+    const LL=[{email:SES.email,name:(S.profile||{}).name||"",surname:(S.profile||{}).surname||"",self:true},...L];
+    const when=a=>a==null?"henüz kayıt yok":a<=0?"bugün":a===1?"dün":a+" gün önce";
+    el.innerHTML=`<h1>Üyeler</h1><div class="chips"><button data-s="act" class="${MEM.sort==="name"?"":"on"}">Sessiz olanlar üstte</button><button data-s="name" class="${MEM.sort==="name"?"on":""}">Ada göre</button></div><div class="card" id="mlist">${LL.map((x,i)=>`<div class="item" data-i="${i}" style="cursor:pointer"><div class="n">${esc([x.name,x.surname].filter(Boolean).join(" ")||x.email)}${x.disabled?" <small>(pasif)</small>":""}${x.note&&!x.note.read?" 📝":""}<small>${esc(x.email)}${x.self?" · ben":""}</small>${x.self?"":`<small style="color:${x.ag==null||x.ag>=7?"var(--bad)":"var(--mut)"}">Son aktivite: ${when(x.ag)} · Antrenman ${x.w7}/7 · Öğün ${x.ate}✓ ${x.miss}✗${x.kg!=null?" · "+x.kg+" kg":""}</small>`}</div><b>›</b></div>`).join("")}</div><button id="mBk" style="width:100%">Tüm üyelerin yedeğini indir</button><button id="mRf" style="width:100%;margin-top:8px">Listeyi yenile</button>`;
+    document.querySelectorAll("#t-mem .chips button").forEach(b=>b.onclick=()=>{MEM.sort=b.dataset.s;renderMem()});
+    document.querySelectorAll("#mlist .item").forEach(it=>it.onclick=()=>{MEM.sel=LL[+it.dataset.i];MEM.pack=null;renderMem()});
+    $("mRf").onclick=()=>{MEM.list=null;renderMem()};
+    $("mBk").onclick=async()=>{
+      const btn=$("mBk"),out=[];btn.textContent="İndiriliyor...";
+      try{for(const x of MEM.list){out.push({email:x.email,name:x.name,surname:x.surname,data:(await api("memberdata",{email:x.email})).data,program:(await api("getprogram",{email:x.email})).text,diet:(await api("getdiet",{email:x.email})).diet})}
+        dl("move-tum-uyeler-"+isoD(new Date())+".json",{app:"move",v:1,exported:new Date().toISOString(),members:out,self:S})}catch(e){alert(e.message)}
+      btn.textContent="Tüm üyelerin yedeğini indir";
+    };
     return;
   }
-  const m=MEM.sel,E=m.email,back=()=>{MEM.sel=null;MEM.pack=null;renderMem()};
+  const m=MEM.sel,E=m.email,back=()=>{MEM.sel=null;MEM.pack=null;MEM.list=null;renderMem()};
   if(!MEM.pack){
     el.innerHTML=`<button id="mBack">‹ Üye listesi</button><div class="empty">Yükleniyor...</div>`;$("mBack").onclick=back;
     try{
@@ -469,11 +609,11 @@ async function renderMem(){
         D.profile=D.profile||{};D.meas=D.meas||[];D.work=D.work||{};D.meals=D.meals||{};D.checks=D.checks||{};
         if(!D.profile.name){D.profile.name=m.name;D.profile.surname=m.surname}
       }
-      MEM.pack={D,pt:(await api("getprogram",{email:E})).text,dt:(await api("getdiet",{email:E})).diet};
+      MEM.pack={D,pt:(await api("getprogram",{email:E})).text,dt:(await api("getdiet",{email:E})).diet,nt:(await api("getnote",{email:E})).note};
     }catch(e){el.innerHTML=`<button id="mBack">‹ Üye listesi</button><div class="err">${esc(e.message)}</div>`;$("mBack").onclick=back;return}
     if(MEM.sel!==m)return;
   }
-  const {D,pt,dt}=MEM.pack,P=D.profile||{},nm=[P.name,P.surname].filter(Boolean).join(" ")||E,st=stats(D);
+  const {D,pt,dt,nt}=MEM.pack,P=D.profile||{},nm=[P.name,P.surname].filter(Boolean).join(" ")||E,st=stats(D);
   const ser=k=>[...(D.meas||[])].sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x[k]!=null&&x[k]!=="").map(x=>({date:x.date,v:+x[k]}));
   const have=MET.filter(([k])=>ser(k).length);if(have.length&&!have.some(h=>h[0]===MEM.cm))MEM.cm=have[0][0];
   const cards=MET.map(([k,l,u])=>{const s=ser(k);if(!s.length)return"";const a=s[s.length-1],b=s[s.length-2],d=b?r1(a.v-b.v):null;
@@ -487,14 +627,15 @@ async function renderMem(){
   el.innerHTML=`<button id="mBack">‹ Üye listesi</button>
   <h1>${esc(nm)}</h1><small style="color:var(--mut)">${esc(E)}${P.boy?" · "+P.boy+" cm":""}</small>
   <div class="card" style="margin-top:8px"><div class="macros"><span>🔥 Seri <b>${st.cur} gün</b></span><span>Antrenman günü <b>${st.wd}</b></span><span>Rozet <b>${got}/${BADGES.length}</b></span></div></div>
-  <h2>Son 7 gün</h2><div class="card"><div class="week">${wk.map(w=>`<div class="dy ${w[1]}"><small>${w[0]}</small><b>${w[1]==="ok"?"✓":w[1]==="no"?"✗":"·"}</b></div>`).join("")}</div><div class="macros"><span>Antrenman <b>${wk.filter(w=>w[1]==="ok").length}/7 gün</b></span><span>Öğün <b>${ate} yendi, ${miss} atlandı</b></span></div></div>
+  <h2>Son 7 gün</h2><div class="card"><div class="week">${wk.map(w=>`<div class="dy ${w[1]}"><small>${w[0]}</small><b>${w[1]==="ok"?"✓":w[1]==="no"?"✗":"·"}</b></div>`).join("")}</div><div class="macros"><span>Antrenman <b>${wk.filter(w=>w[1]==="ok").length}/7 gün</b></span><span>Öğün <b>${ate} yendi, ${miss} atlandı</b></span><span>Su <b>${r1(dd.reduce((a,x)=>a+((D.water||{})[x]||0),0)/7)} bardak/gün</b></span></div></div>
   <h2>Ölçümler</h2>${have.length?`<div class="grid">${cards}</div><div class="card" style="margin-top:8px"><div class="chips">${have.map(([k,l])=>`<button data-k="${k}" class="${k===MEM.cm?"on":""}">${l}</button>`).join("")}</div>${chartSvgS(ser(MEM.cm))}</div>`:`<div class="card"><div class="empty">Henüz ölçüm yok.</div></div>`}
   <h2>Son antrenmanlar</h2><div class="card">${wd.length?wd.map(d=>`<div class="item"><div class="n"><b>${d}</b><small>${D.work[d].map(e=>esc(e.ex)+" "+e.sets+"×"+e.reps+(e.kg?" · "+e.kg+" kg":"")).join("<br>")}</small></div></div>`).join(""):`<div class="empty">Kayıt yok.</div>`}</div>
   <h2>Son beslenme</h2><div class="card">${md.length?md.map(d=>{const L=D.meals[d],k=L.reduce((a,x)=>a+x.kcal,0),pp=L.reduce((a,x)=>a+x.p,0);return `<div class="item"><div class="n"><b>${d}</b> · ${k} kcal · P ${r1(pp)} g<small>${L.map(x=>esc(x.name)+" "+x.g+" g").join(", ")}</small></div></div>`}).join(""):`<div class="empty">Kayıt yok.</div>`}</div>
   <h2>Fotoğraflar</h2><div class="card"><div class="pg" id="mpg">Yükleniyor...</div></div>
+  <h2>Üyeye not</h2><div class="card"><textarea id="ntT" rows="3" placeholder="Örn. Bu hafta bacak gününü 4 sete çıkar">${esc(nt?nt.text:"")}</textarea><small style="color:var(--mut)">${nt?(nt.read?"Üye okudu":"Üye henüz okumadı"):"Not yok"}. Boş bırakıp kaydedersen not silinir.</small><div class="err" id="ntE"></div><button class="pri" id="ntS" style="width:100%">Notu gönder</button></div>
   <h2>Antrenman programı</h2><div class="card"><textarea id="mpT" rows="8" placeholder="# Göğüs günü&#10;Bench press 4x8&#10;Incline press 3x10&#10;# Bacak günü&#10;Squat 5x5">${esc(pt||"")}</textarea><small style="color:var(--mut)"># ile gün başlığı, hareketleri "Hareket 4x8" biçiminde yaz.</small><div class="err" id="mpE"></div><button class="pri" id="mpS" style="width:100%">Programı kaydet</button></div>
   <h2>Beslenme programı</h2><div class="card"><div class="grid"><label class="fld"><small>Kalori hedefi</small><input id="dK" type="number" inputmode="numeric" value="${dt&&dt.kcal||""}"></label><label class="fld"><small>Protein (g)</small><input id="dP" type="number" inputmode="numeric" value="${dt&&dt.p||""}"></label><label class="fld"><small>Karbonhidrat (g)</small><input id="dC" type="number" inputmode="numeric" value="${dt&&dt.c||""}"></label><label class="fld"><small>Yağ (g)</small><input id="dF" type="number" inputmode="numeric" value="${dt&&dt.f||""}"></label></div><textarea id="dT" rows="7" style="margin-top:8px" placeholder="Kahvaltı: 3 yumurta, 60 g yulaf&#10;Öğle: 150 g tavuk, pilav, salata&#10;Akşam: ...">${esc((dt&&dt.text)||"")}</textarea><div class="err" id="dE"></div><button class="pri" id="dS" style="width:100%">Beslenme programını kaydet</button></div>
-  ${m.self?"":`<h2>Şifre</h2><div class="card"><input id="rpN" type="text" autocomplete="off" placeholder="Yeni şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><div class="err" id="rpE"></div><button id="rpS" style="width:100%">Şifreyi sıfırla</button><small style="color:var(--mut)">Üyenin diğer cihazlardaki oturumları kapanır, yeni şifreyle girer.</small></div>`}
+  ${m.self?"":`<h2>Şifre</h2><div class="card"><input id="rpN" type="text" autocomplete="off" placeholder="Yeni şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><div class="err" id="rpE"></div><button id="rpS" style="width:100%">Şifreyi sıfırla</button><small style="color:var(--mut)">Üyenin diğer cihazlardaki oturumları kapanır, yeni şifreyle girer.</small></div><h2>Hesap</h2><div class="card"><button id="acDl" style="width:100%;margin-bottom:8px">Üyenin verisini indir (yedek)</button><button id="acA" style="width:100%;margin-bottom:8px">${m.disabled?"Hesabı aktifleştir":"Hesabı pasife al"}</button><button id="acD" style="width:100%;color:var(--bad)">Üyeyi kalıcı sil</button><div class="err" id="acE"></div><small style="color:var(--mut)">Pasife alınan üye giriş yapamaz, kayıtları durur. Silme geri alınamaz.</small></div>`}
   ${badgeCard(D)}`;
   $("mBack").onclick=back;
   document.querySelectorAll("#t-mem .chips button").forEach(b=>b.onclick=()=>{MEM.cm=b.dataset.k;renderMem()});
@@ -502,13 +643,27 @@ async function renderMem(){
   $("mpS").onclick=async()=>{try{const t=$("mpT").value;await api("setprogram",{email:E,text:t});MEM.pack.pt=t;if(m.self)PROG=t;say("mpE",1,"Program kaydedildi")}catch(e){say("mpE",0,e.message)}};
   $("dS").onclick=async()=>{try{const x={kcal:$("dK").value,p:$("dP").value,c:$("dC").value,f:$("dF").value,text:$("dT").value};await api("setdiet",{email:E,diet:x});MEM.pack.dt={kcal:+x.kcal||0,p:+x.p||0,c:+x.c||0,f:+x.f||0,text:x.text};if(m.self)DIET=undefined;say("dE",1,"Beslenme programı kaydedildi")}catch(e){say("dE",0,e.message)}};
   if($("rpS"))$("rpS").onclick=async()=>{try{await api("setpw",{email:E,password:$("rpN").value});$("rpN").value="";say("rpE",1,"Şifre değiştirildi, üyeye ilet")}catch(e){say("rpE",0,e.message)}};
+  $("ntS").onclick=async()=>{try{const t=$("ntT").value;await api("setnote",{email:E,text:t});MEM.pack.nt=t.trim()?{text:t.trim(),read:false}:null;say("ntE",1,t.trim()?"Not gönderildi":"Not silindi")}catch(e){say("ntE",0,e.message)}};
+  if($("acDl"))$("acDl").onclick=()=>dl("move-"+E.replace(/[^a-z0-9]/gi,"_")+"-yedek.json",{app:"move",v:1,exported:new Date().toISOString(),email:E,data:D,program:pt,diet:dt});
+  if($("acA"))$("acA").onclick=async()=>{try{await api("setactive",{email:E,active:!!m.disabled});m.disabled=!m.disabled;MEM.list=null;renderMem()}catch(e){say("acE",0,e.message)}};
+  if($("acD"))$("acD").onclick=async()=>{if(!confirm("Bu üye ve bütün kayıtları kalıcı olarak silinecek. Emin misin?"))return;try{await api("deluser",{email:E});back()}catch(e){say("acE",0,e.message)}};
   loadMemPhotos(E);
 }
 
 /* ---------- Hesap ---------- */
 async function renderAcc(){
-  $("t-acc").innerHTML=`<h1>Hesap</h1><div class="card"><div class="item"><div class="n">${esc(SES.email)}<small>${SES.admin?"Yönetici":"Kullanıcı"}</small></div></div><button id="out" style="width:100%">Çıkış yap</button></div>${SES.admin?`<h2>Şifre</h2><div class="card"><small style="color:var(--mut)">Yönetici şifren Vercel'deki ADMIN_PASSWORD ayarında durur. Değiştirmek için Vercel > Settings > Environment Variables bölümünden güncelle ve yeniden yayınla (Redeploy). Üyelerin şifresini Üyeler sekmesinden sıfırlayabilirsin.</small></div>`:`<h2>Şifre değiştir</h2><div class="card"><input id="pwC" type="password" autocomplete="current-password" placeholder="Mevcut şifre" style="width:100%;margin-bottom:8px"><input id="pwN" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><input id="pwR" type="password" autocomplete="new-password" placeholder="Yeni şifre (tekrar)" style="width:100%"><div class="err" id="pwE"></div><button class="pri" id="pwS" style="width:100%">Şifreyi değiştir</button></div>`}`+(SES.admin?`<div class="card"><b>Yeni kullanıcı ekle</b><div class="row" style="margin:8px 0"><input id="nNm" placeholder="Ad"><input id="nSn" placeholder="Soyad"></div><input id="nEm" type="email" placeholder="E-posta" style="width:100%;margin-bottom:8px"><input id="nPw" type="text" placeholder="Şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><div class="err" id="nErr"></div><button class="pri" id="nAdd" style="width:100%">Kullanıcıyı ekle</button></div><div class="card"><b>Kullanıcılar</b><div id="ulist" class="empty">Yükleniyor...</div></div>`:"");
+  $("t-acc").innerHTML=`<h1>Hesap</h1><div class="card"><div class="item"><div class="n">${esc(SES.email)}<small>${SES.admin?"Yönetici":"Kullanıcı"}</small></div></div><button id="out" style="width:100%">Çıkış yap</button></div>${SES.admin?`<h2>Şifre</h2><div class="card"><small style="color:var(--mut)">Yönetici şifren Vercel'deki ADMIN_PASSWORD ayarında durur. Değiştirmek için Vercel > Settings > Environment Variables bölümünden güncelle ve yeniden yayınla (Redeploy). Üyelerin şifresini Üyeler sekmesinden sıfırlayabilirsin.</small></div>`:`<h2>Şifre değiştir</h2><div class="card"><input id="pwC" type="password" autocomplete="current-password" placeholder="Mevcut şifre" style="width:100%;margin-bottom:8px"><input id="pwN" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><input id="pwR" type="password" autocomplete="new-password" placeholder="Yeni şifre (tekrar)" style="width:100%"><div class="err" id="pwE"></div><button class="pri" id="pwS" style="width:100%">Şifreyi değiştir</button></div>`}<h2>Yedek</h2><div class="card"><button id="bkDl" style="width:100%;margin-bottom:8px">Verilerimi indir</button><label class="fld"><small>Yedekten geri yükle (.json)</small><input id="bkUp" type="file" accept=".json,application/json"></label><div class="err" id="bkE"></div></div>`+(SES.admin?`<div class="card"><b>Yeni kullanıcı ekle</b><div class="row" style="margin:8px 0"><input id="nNm" placeholder="Ad"><input id="nSn" placeholder="Soyad"></div><input id="nEm" type="email" placeholder="E-posta" style="width:100%;margin-bottom:8px"><input id="nPw" type="text" placeholder="Şifre (en az 6 karakter)" style="width:100%;margin-bottom:8px"><div class="err" id="nErr"></div><button class="pri" id="nAdd" style="width:100%">Kullanıcıyı ekle</button></div><div class="card"><b>Kullanıcılar</b><div id="ulist" class="empty">Yükleniyor...</div></div>`:"");
   $("out").onclick=logout;
+  $("bkDl").onclick=()=>dl("move-yedek-"+isoD(new Date())+".json",{app:"move",v:1,exported:new Date().toISOString(),email:SES.email,data:S});
+  $("bkUp").onchange=()=>{
+    const f=$("bkUp").files[0];if(!f)return;const r=new FileReader(),e=$("bkE");
+    r.onload=()=>{try{
+      const o=JSON.parse(r.result);if(!o||!o.data||typeof o.data!=="object")throw 0;
+      if(!confirm("Mevcut kayıtların bu yedekle değiştirilecek. Devam edilsin mi?"))return;
+      S=Object.assign(EMPTY(),o.data);CHK.forEach(k=>{S[k]=S[k]||{}});fixS();save();e.style.color="var(--ac)";e.textContent="Yedek yüklendi"
+    }catch(x){e.style.color="var(--bad)";e.textContent="Geçersiz yedek dosyası"}};
+    r.readAsText(f);
+  };
   if($("pwS"))$("pwS").onclick=async()=>{
     const e=$("pwE"),say=(ok,m)=>{e.style.color=ok?"var(--ac)":"var(--bad)";e.textContent=m};
     if($("pwN").value!==$("pwR").value)return say(0,"Yeni şifreler aynı değil");
@@ -559,10 +714,19 @@ async function start(){
   const c=localStorage.getItem("move-data-"+SES.email);
   S=c?JSON.parse(c):EMPTY();fixS();render();
   try{
-    const j=await api("load");
-    if(j.data){S=j.data;localStorage.setItem("move-data-"+SES.email,JSON.stringify(S))}
-    else if(SES.admin&&localStorage.getItem(LEGACY)){S=JSON.parse(localStorage.getItem(LEGACY));save()}
-    else save();
+    const j=await api("loadx"),mo=j.months||{};
+    if(j.core||Object.keys(mo).length){
+      S=Object.assign(EMPTY(),j.core||{});CHK.forEach(k=>{S[k]=Object.assign({},S[k]||{})});
+      Object.keys(mo).sort().forEach(m=>CHK.forEach(k=>Object.assign(S[k],(mo[m]||{})[k]||{})));
+      const legacy=!!j.core&&CHK.some(k=>j.core[k]&&Object.keys(j.core[k]).length);
+      fixS();SYNC={core:legacy?null:JSON.stringify(splitS().core),months:{}};
+      Object.keys(mo).forEach(m=>SYNC.months[m]=JSON.stringify(mo[m]));
+      localStorage.setItem("move-data-"+SES.email,JSON.stringify(S));
+      if(legacy)flush();
+    }else{
+      if(SES.admin&&localStorage.getItem(LEGACY))S=JSON.parse(localStorage.getItem(LEGACY));
+      fixS();SYNC={core:null,months:{}};flush();
+    }
     fixS();$("sync").textContent="";render();
   }catch(e){$("sync").textContent="Çevrimdışı, kayıtlar telefondan gösteriliyor"}
 }
