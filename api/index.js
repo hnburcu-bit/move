@@ -59,12 +59,18 @@ module.exports = async (req, res) => {
   try {
     if (b.action === "login") {
       const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "").trim();
-      if (email === AE && same(pw, AP)) return res.json({ token: mkToken({ e: email, a: 1 }), email, admin: true });
+      const ip = String((req.headers && req.headers["x-forwarded-for"]) || "x").split(",")[0].trim().slice(0, 64);
+      const k1 = "rl:" + ip + ":" + email.slice(0, 120), k2 = "rl:" + ip;
+      const [c1, c2] = [Number(await redis(["GET", k1])) || 0, Number(await redis(["GET", k2])) || 0];
+      if (c1 >= 8 || c2 >= 30) return res.status(429).json({ error: "Çok fazla hatalı deneme. 15 dakika sonra tekrar dene." });
+      const fail = async () => { for (const k of [k1, k2]) { const n = await redis(["INCR", k]); if (n === 1) await redis(["EXPIRE", k, 900]); } };
+      if (email === AE && same(pw, AP)) { await redis(["DEL", k1]); return res.json({ token: mkToken({ e: email, a: 1 }), email, admin: true }); }
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
         const u = JSON.parse(rec);
-        if (same(hashPw(pw, u.salt), u.hash)) { if (u.disabled) return res.status(403).json({ error: "Bu hesap pasif. Koçunla iletişime geç." }); return res.json({ token: mkToken({ e: email, a: 0, v: u.hash.slice(0, 8) }), email, admin: false, name: u.name || "", surname: u.surname || "" }); }
+        if (same(hashPw(pw, u.salt), u.hash)) { if (u.disabled) return res.status(403).json({ error: "Bu hesap pasif. Koçunla iletişime geç." }); await redis(["DEL", k1]); return res.json({ token: mkToken({ e: email, a: 0, v: u.hash.slice(0, 8) }), email, admin: false, name: u.name || "", surname: u.surname || "" }); }
       }
+      await fail();
       return res.status(401).json({ error: "E-posta veya şifre hatalı" });
     }
     const u = readToken(req.headers.authorization);
