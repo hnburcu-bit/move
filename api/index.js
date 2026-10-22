@@ -25,6 +25,30 @@ function same(a, b) {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 const hashPw = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString("hex");
+const CH = ["work", "meals", "checks", "water"];
+const pj = s => { try { return s ? JSON.parse(s) : null; } catch (e) { return null; } };
+async function loadAll(email) {
+  const core = pj(await redis(["GET", "data:" + email]));
+  const flat = (await redis(["HGETALL", "mon:" + email])) || [], months = {};
+  for (let i = 0; i < flat.length; i += 2) { const v = pj(flat[i + 1]); if (v) months[flat[i]] = v; }
+  return { core, months };
+}
+function mergeData(core, months) {
+  const D = core ? { ...core } : {};
+  CH.forEach(k => { D[k] = { ...(D[k] || {}) }; });
+  Object.keys(months).sort().forEach(m => CH.forEach(k => Object.assign(D[k], (months[m] || {})[k] || {})));
+  return D;
+}
+function digest(D, dates7) {
+  const W = D.work || {}, C = D.checks || {}, M = D.meals || {}, days = new Set(), act = new Set();
+  Object.keys(W).forEach(d => { if ((W[d] || []).length) { days.add(d); act.add(d); } });
+  Object.keys(M).forEach(d => { if ((M[d] || []).length) act.add(d); });
+  Object.keys(C).forEach(d => { act.add(d); if (C[d].w === true) days.add(d); else if (C[d].w === false) days.delete(d); });
+  let ate = 0, miss = 0;
+  dates7.forEach(d => Object.values((C[d] || {}).m || {}).forEach(v => { if (v === true) ate++; else if (v === false) miss++; }));
+  const kgs = [...(D.meas || [])].filter(x => x.kg != null).sort((a, b) => a.date.localeCompare(b.date)), lk = kgs[kgs.length - 1];
+  return { last: [...act].sort().pop() || null, w7: dates7.filter(d => days.has(d)).length, ate, miss, kg: lk ? lk.kg : null };
+}
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
@@ -38,7 +62,7 @@ module.exports = async (req, res) => {
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
         const u = JSON.parse(rec);
-        if (same(hashPw(pw, u.salt), u.hash)) return res.json({ token: mkToken({ e: email, a: 0, v: u.hash.slice(0, 8) }), email, admin: false, name: u.name || "", surname: u.surname || "" });
+        if (same(hashPw(pw, u.salt), u.hash)) { if (u.disabled) return res.status(403).json({ error: "Bu hesap pasif. Koçunla iletişime geç." }); return res.json({ token: mkToken({ e: email, a: 0, v: u.hash.slice(0, 8) }), email, admin: false, name: u.name || "", surname: u.surname || "" }); }
       }
       return res.status(401).json({ error: "E-posta veya şifre hatalı" });
     }
@@ -46,9 +70,23 @@ module.exports = async (req, res) => {
     if (!u) return res.status(401).json({ error: "Oturum bitti, tekrar giriş yap" });
     if (!u.a) {
       const rr = await redis(["HGET", "users", u.e]), rc = rr && JSON.parse(rr);
-      if (!rc || u.v !== rc.hash.slice(0, 8)) return res.status(401).json({ error: "Oturum bitti, tekrar giriş yap" });
+      if (!rc || rc.disabled || u.v !== rc.hash.slice(0, 8)) return res.status(401).json({ error: "Oturum bitti, tekrar giriş yap" });
     }
     const key = "data:" + u.e;
+    if (b.action === "loadx") { const x = await loadAll(u.e); return res.json({ core: x.core, months: x.months }); }
+    if (b.action === "savex") {
+      const mon = b.months || {};
+      if (b.core !== undefined && b.core !== null) { const c = JSON.stringify(b.core); if (c.length > 900000) return res.status(413).json({ error: "Veri çok büyük" }); await redis(["SET", key, c]); }
+      for (const [m, v] of Object.entries(mon)) {
+        if (!/^\d{4}-\d{2}$/.test(m)) continue;
+        if (v === null) { await redis(["HDEL", "mon:" + u.e, m]); continue; }
+        const c = JSON.stringify(v); if (c.length > 900000) return res.status(413).json({ error: "Bir ayın verisi çok büyük" });
+        await redis(["HSET", "mon:" + u.e, m, c]);
+      }
+      return res.json({ ok: true });
+    }
+    if (b.action === "mynote") return res.json({ note: pj(await redis(["GET", "note:" + u.e])) });
+    if (b.action === "readnote") { const n = pj(await redis(["GET", "note:" + u.e])); if (n) { n.read = true; await redis(["SET", "note:" + u.e, JSON.stringify(n)]); } return res.json({ ok: true }); }
     if (b.action === "changepw") {
       if (u.a) return res.status(400).json({ error: "Yönetici şifresi Vercel'deki ADMIN_PASSWORD ayarından değiştirilir" });
       const np = String(b.password || "");
@@ -85,9 +123,41 @@ module.exports = async (req, res) => {
     if (b.action === "myprogram") return res.json({ text: (await redis(["GET", "prog:" + u.e])) || "" });
     if (u.a) {
       const tg = String(b.email || "").trim().toLowerCase();
+      if (b.action === "summary") {
+        const today = /^\d{4}-\d{2}-\d{2}$/.test(String(b.today || "")) ? b.today : new Date().toISOString().slice(0, 10);
+        const d0 = new Date(today + "T00:00:00Z"), day = n => { const t = new Date(d0); t.setUTCDate(t.getUTCDate() - n); return t.toISOString().slice(0, 10); };
+        const dates7 = [0, 1, 2, 3, 4, 5, 6].map(day), a = (await redis(["HGETALL", "users"])) || [], list = [];
+        for (let i = 0; i < a.length; i += 2) { const r = pj(a[i + 1]) || {}; list.push({ email: a[i], name: r.name || "", surname: r.surname || "", disabled: !!r.disabled }); }
+        const out = await Promise.all(list.map(async m => {
+          const [coreS, keys, noteS] = await Promise.all([redis(["GET", "data:" + m.email]), redis(["HKEYS", "mon:" + m.email]), redis(["GET", "note:" + m.email])]);
+          const ks = (keys || []).sort(), want = new Set([today.slice(0, 7), day(7).slice(0, 7)]);
+          if (ks.length) want.add(ks[ks.length - 1]);
+          const months = {};
+          await Promise.all([...want].filter(k => ks.includes(k)).map(async k => { const v = pj(await redis(["HGET", "mon:" + m.email, k])); if (v) months[k] = v; }));
+          const note = pj(noteS);
+          return { ...m, ...digest(mergeData(pj(coreS), months), dates7), note: note ? { read: !!note.read } : null };
+        }));
+        return res.json({ members: out });
+      }
+      if (b.action === "setnote" || b.action === "getnote") {
+        if (tg !== AE && !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        if (b.action === "getnote") return res.json({ note: pj(await redis(["GET", "note:" + tg])) });
+        const text = String(b.text || "").trim().slice(0, 600);
+        if (text) await redis(["SET", "note:" + tg, JSON.stringify({ text, ts: Date.now(), read: false })]); else await redis(["DEL", "note:" + tg]);
+        return res.json({ ok: true });
+      }
+      if (b.action === "setactive" || b.action === "deluser") {
+        const rr = tg === AE ? null : await redis(["HGET", "users", tg]);
+        if (tg === AE) return res.status(400).json({ error: "Yönetici hesabı değiştirilemez" });
+        if (!rr) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        if (b.action === "setactive") { const r = JSON.parse(rr); r.disabled = !b.active; await redis(["HSET", "users", tg, JSON.stringify(r)]); return res.json({ ok: true }); }
+        await redis(["HDEL", "users", tg]);
+        await redis(["DEL", "data:" + tg, "mon:" + tg, "photos:" + tg, "prog:" + tg, "diet:" + tg, "note:" + tg]);
+        return res.json({ ok: true });
+      }
       if (b.action === "members") {
         const a = (await redis(["HGETALL", "users"])) || [], list = [];
-        for (let i = 0; i < a.length; i += 2) { let r = {}; try { r = JSON.parse(a[i + 1]); } catch (e) {} list.push({ email: a[i], name: r.name || "", surname: r.surname || "" }); }
+        for (let i = 0; i < a.length; i += 2) { let r = {}; try { r = JSON.parse(a[i + 1]); } catch (e) {} list.push({ email: a[i], name: r.name || "", surname: r.surname || "", disabled: !!r.disabled }); }
         return res.json({ members: list });
       }
       if (b.action === "setpw") {
@@ -101,8 +171,8 @@ module.exports = async (req, res) => {
       }
       if (b.action === "memberdata") {
         if (tg !== AE && !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
-        const d = await redis(["GET", "data:" + tg]);
-        return res.json({ data: d ? JSON.parse(d) : null });
+        const x = await loadAll(tg);
+        return res.json({ data: x.core || Object.keys(x.months).length ? mergeData(x.core, x.months) : null });
       }
       if (b.action === "getdiet") { const d = await redis(["GET", "diet:" + tg]); return res.json({ diet: d ? JSON.parse(d) : null }); }
       if (b.action === "setdiet") {
