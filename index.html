@@ -90,6 +90,14 @@ svg{width:100%;height:auto}
 #pk{position:fixed;inset:0;z-index:70;background:rgba(14,20,29,.98);display:flex;flex-direction:column;gap:10px;padding:12px;width:min(100%,560px);left:50%;transform:translateX(-50%)}
 .pkh{display:flex;gap:8px}.pkh input{flex:1}
 #pkG{flex-wrap:nowrap;overflow-x:auto;margin:0;flex:0 0 auto}#pkG button{white-space:nowrap}
+.gxg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gxc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px}
+.gxi{aspect-ratio:4/3;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:34px}
+.gxi.big{aspect-ratio:4/3;max-height:50vh;width:100%}
+.gxi img{width:100%;height:100%;object-fit:contain}
+.gxc b{font-size:13px;text-transform:none;font-family:inherit;letter-spacing:0;line-height:1.2}.gxc small{color:var(--mut)}
+.gxs{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.6);color:#ffd166;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.gxy{display:block;margin-top:10px;padding:11px;text-align:center;border:1px solid var(--line);border-radius:10px;color:var(--tx);text-decoration:none}
 .pkl{flex:1;overflow-y:auto}.pkl button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;margin-bottom:6px;text-transform:none;font-family:inherit}.pkl small{color:var(--mut)}
 .seg{display:flex;gap:8px;margin:8px 0}.seg button{flex:1}.seg button.on{background:var(--ac);color:#06201d;border:0;font-weight:700}
 .mv{display:grid;grid-template-columns:1fr 70px 90px auto;gap:6px;align-items:center;margin-bottom:6px}.mv input{padding:8px;width:100%}
@@ -214,7 +222,7 @@ async function flush(){
 }
 function fixS(){
   S.meas=S.meas||(S.weights||[]).map(w=>({date:w.date,kg:w.kg}));
-  S.profile=S.profile||{};S.tpl=S.tpl||[];S.checks=S.checks||{};S.water=S.water||{};S.cf=S.cf||{};
+  S.profile=S.profile||{};S.tpl=S.tpl||[];S.checks=S.checks||{};S.water=S.water||{};S.cf=S.cf||{};S.favx=S.favx||[];
   if(SES&&!S.profile.name&&SES.name){S.profile.name=SES.name;S.profile.surname=SES.surname||""}
 }
 function logout(){PROG=null;DIET=undefined;NOTE=undefined;SYNC={core:null,months:{}};MEM={list:null,sel:null,pack:null,cm:"kg"};localStorage.removeItem(TK);SES=null;S=EMPTY();$("login").hidden=false}
@@ -458,6 +466,61 @@ function renderCF(){
   document.querySelectorAll("#t-work .cfd").forEach(b=>b.onclick=()=>{S.cf[d].splice(+b.dataset.i,1);save();renderCF()});
 }
 
+/* ---------- Hareket rehberi (açık lisanslı görseller) ---------- */
+const GDB="https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/";
+const GM={chest:"Göğüs",lats:"Sırt","middle back":"Sırt","lower back":"Sırt",traps:"Sırt",shoulders:"Omuz",biceps:"Biceps",triceps:"Triceps",quadriceps:"Bacak",hamstrings:"Bacak",calves:"Bacak",adductors:"Bacak",abductors:"Bacak",glutes:"Kalça",abdominals:"Karın",forearms:"Diğer",neck:"Diğer"};
+const GMT={chest:"göğüs",lats:"kanat",shoulders:"omuz",biceps:"biceps",triceps:"triceps",quadriceps:"ön bacak",hamstrings:"arka bacak",calves:"baldır",glutes:"kalça",abdominals:"karın","middle back":"orta sırt","lower back":"bel",traps:"trapez",forearms:"ön kol",neck:"boyun",adductors:"iç bacak",abductors:"dış bacak"};
+const GEQ={"body only":"Vücut ağırlığı",barbell:"Halter",dumbbell:"Dumbbell",machine:"Makine",cable:"Kablo",kettlebells:"Kettlebell",bands:"Lastik","e-z curl bar":"EZ bar","medicine ball":"Medicine ball","exercise ball":"Pilates topu","foam roll":"Foam roll",other:"Diğer"};
+const GCH=["Favoriler","Hepsi","Göğüs","Sırt","Omuz","Biceps","Triceps","Bacak","Kalça","Karın","CrossFit","Diğer"];
+let GX=null,GI=[],GTMR=null;
+async function gxLoad(){
+  if(GX)return GX;
+  for(const u of [GDB+"dist/exercises.json","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json"]){
+    try{
+      const r=await fetch(u);if(!r.ok)continue;const j=await r.json();
+      if(Array.isArray(j)&&j.length){GX=j.map(e=>({n:String(e.name||""),g:GM[(e.primaryMuscles||[])[0]]||"Diğer",pm:e.primaryMuscles||[],sm:e.secondaryMuscles||[],eq:e.equipment||"",ins:e.instructions||[],im:(e.images||[]).map(x=>GDB+"exercises/"+String(x).split("/").map(encodeURIComponent).join("/"))})).filter(e=>e.n);return GX}
+    }catch(e){}
+  }
+  GX=[];return GX;
+}
+const gxStop=()=>{if(GTMR){clearInterval(GTMR);GTMR=null}};
+function gxClose(){gxStop();$("pk").hidden=true}
+async function gxOpen(){
+  const pk=$("pk");pk.hidden=false;
+  let g="Hepsi",lim=40;
+  pk.innerHTML=`<div class="pkh"><input id="gxQ" placeholder="Hareket veya kas ara (örn. curl, göğüs)"><button id="gxX">Kapat</button></div><div class="chips" id="gxG">${GCH.map(x=>`<button data-g="${x}" class="${x===g?"on":""}">${x==="Favoriler"?"★ Favoriler":x}</button>`).join("")}</div><div id="gxL" class="pkl"><div class="empty">Yükleniyor...</div></div>`;
+  $("gxX").onclick=gxClose;
+  const all=await gxLoad(),mapG=n=>n.startsWith("CrossFit")?"CrossFit":n;
+  const base=all.length?all:EXLIB.filter(e=>!e[1].startsWith("CrossFit")).map(e=>({n:e[0],g:mapG(e[1]),pm:[],sm:[],eq:"",ins:[],im:[]}));
+  const cfi=EXLIB.filter(e=>e[1].startsWith("CrossFit")).map(e=>({n:e[0],g:"CrossFit",pm:[],sm:[],eq:"",ins:[],im:[]}));
+  GI=base.concat(cfi);
+  const note=all.length?"":`<div class="empty">Görsel veritabanına ulaşılamadı, hareketler görselsiz gösteriliyor. İnternet bağlantını kontrol edip tekrar aç.</div>`;
+  const fav=()=>S.favx||(S.favx=[]);
+  const list=()=>{
+    const q=$("gxQ").value.trim().toLowerCase();
+    const L=GI.map((e,i)=>({e,i})).filter(({e})=>(g==="Hepsi"||(g==="Favoriler"?fav().includes(e.n):e.g===g))&&(!q||(e.n+" "+e.pm.join(" ")+" "+e.pm.map(m=>GMT[m]||"").join(" ")+" "+e.g).toLowerCase().includes(q)));
+    const sh=L.slice(0,lim);
+    $("gxL").innerHTML=note+(sh.length?`<div class="gxg">${sh.map(({e,i})=>`<div class="gxc" data-i="${i}"><span class="gxs" data-f="${i}">${fav().includes(e.n)?"★":"☆"}</span><div class="gxi">${e.im[0]?`<img loading="lazy" src="${esc(e.im[0])}" alt="${esc(e.n)}">`:`<span>🏋</span>`}</div><b>${esc(e.n)}</b><small>${esc(e.g)}${e.pm[0]?" · "+esc(GMT[e.pm[0]]||e.pm[0]):""}</small></div>`).join("")}</div>${L.length>lim?`<button id="gxMore" style="width:100%;margin-top:8px">Daha fazla (${L.length-lim})</button>`:""}`:`<div class="empty">${g==="Favoriler"?"Henüz favorin yok. Kartlardaki ☆ işaretine bas.":"Sonuç yok."}</div>`);
+  };
+  const detail=i=>{
+    const e=GI[i];gxStop();
+    $("gxL").innerHTML=`<button id="gxB" style="margin-bottom:8px">‹ Geri</button><div class="gxi big">${e.im[0]?`<img id="gxImg" src="${esc(e.im[0])}" alt="${esc(e.n)}">`:`<span>🏋</span>`}</div><h2>${esc(e.n)}</h2><small style="color:var(--mut)">${e.pm.length?"Ana kas: "+esc(e.pm.map(m=>GMT[m]||m).join(", "))+". ":""}${e.sm.length?"Yardımcı: "+esc(e.sm.map(m=>GMT[m]||m).join(", "))+". ":""}${e.eq?"Ekipman: "+esc(GEQ[e.eq]||e.eq)+".":""}</small>${e.ins.length?`<div class="card" style="margin-top:8px"><b>Yapılışı (İngilizce)</b><ol style="margin:6px 0 0;padding-left:18px">${e.ins.map(x=>`<li style="margin-bottom:4px">${esc(x)}</li>`).join("")}</ol></div>`:""}<a class="gxy" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n+" nasıl yapılır")}">▶ YouTube'da nasıl yapılır</a><div class="row" style="margin-top:8px"><button id="gxFav">${fav().includes(e.n)?"★ Favoriden çıkar":"☆ Favoriye ekle"}</button><button class="pri" id="gxAdd">Antrenmana ekle</button></div>`;
+    if(e.im.length>1){let k=0;GTMR=setInterval(()=>{const im=$("gxImg");if(!im){gxStop();return}k=(k+1)%e.im.length;im.src=e.im[k]},900)}
+    $("gxB").onclick=()=>{gxStop();list()};
+    $("gxFav").onclick=()=>{const f=fav(),x=f.indexOf(e.n);if(x>=0)f.splice(x,1);else f.push(e.n);save();detail(i)};
+    $("gxAdd").onclick=()=>{const d=$("date").value;(S.work[d]=S.work[d]||[]).push({ex:e.n,sets:3,reps:10,kg:lastKg(e.n)});save();gxClose();if(tab==="work"&&WMODE==="gym")renderWork();else{WMODE="gym";goTab("work")}};
+  };
+  $("gxQ").oninput=()=>{lim=40;list()};
+  $("gxG").onclick=ev=>{const b=ev.target.closest("button");if(!b)return;g=b.dataset.g;lim=40;document.querySelectorAll("#gxG button").forEach(x=>x.classList.toggle("on",x===b));list()};
+  $("gxL").onclick=ev=>{
+    const s=ev.target.closest(".gxs");
+    if(s){const e=GI[+s.dataset.f],f=fav(),x=f.indexOf(e.n);if(x>=0)f.splice(x,1);else f.push(e.n);save();s.textContent=x>=0?"☆":"★";return}
+    if(ev.target.closest("#gxMore")){lim+=40;list();return}
+    const c=ev.target.closest(".gxc");if(c)detail(+c.dataset.i);
+  };
+  list();
+}
+
 /* ---------- Rekor, geçmiş, zamanlayıcı ---------- */
 function isPR(w,d){
   const k=w.ex.toLowerCase(),kg=+w.kg||0;if(kg<=0)return false;let mx=-1;
@@ -509,6 +572,7 @@ function renderWork(){
   if(WMODE==="cf"){renderCF();return}
   const d=$("date").value,list=S.work[d]||[];
   $("t-work").innerHTML=`${heroBox("run","Antrenman","Bugünkü çalışmanı kaydet")}${segHTML("gym")}
+  <button id="gxOpen" class="pri" style="width:100%;margin-bottom:8px">📖 Hareket rehberi (görselli)</button>
   <div id="progBox"></div>
   <div class="card"><b>Şablondan ekle</b><div class="row" style="margin-top:8px"><select id="tSel">${allTpl().map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select><button class="pri" id="tAdd" style="flex:0 0 auto">Ekle</button></div>
   <div class="row" style="margin-top:8px"><button id="tEdit">Düzenle</button><button id="tDel">Sil</button><button id="tFromDay">Bugünkünden</button></div>
@@ -535,6 +599,7 @@ function renderWork(){
     (S.work[d]=S.work[d]||[]).push(...t.items.map(i=>({ex:i.ex,sets:i.sets,reps:i.reps,kg:lastKg(i.ex)||i.kg||0})));save();renderWork();
   };
   bindSeg();bindTB();
+  $("gxOpen").onclick=gxOpen;
   $("wPick").onclick=()=>pickEx(n=>{$("wEx").value=n;if(!$("wKg").value){const k=lastKg(n);if(k)$("wKg").value=k}});
   $("tEdit").onclick=()=>{const t=allTpl().find(x=>x.id===$("tSel").value);if(!t)return;const own=t.id[0]==="u",o=own?S.tpl.find(x=>x.id===t.id):null;TB={id:own?t.id:null,name:own&&o?o.name:t.name+" (kopya)",items:t.items.map(i=>({...i}))};redrawTB();$("tbDet").open=true};
   $("tFromDay").onclick=()=>{if(!list.length)return alert("Bugün için hareket yok.");TB={id:null,name:"",items:list.map(({ex,sets,reps,kg})=>({ex,sets,reps,kg}))};redrawTB();$("tbDet").open=true};
