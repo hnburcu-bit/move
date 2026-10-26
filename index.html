@@ -90,6 +90,8 @@ svg{width:100%;height:auto}
 #pk{position:fixed;inset:0;z-index:70;background:rgba(14,20,29,.98);display:flex;flex-direction:column;gap:10px;padding:12px;width:min(100%,560px);left:50%;transform:translateX(-50%)}
 .pkh{display:flex;gap:8px}.pkh input{flex:1}
 #pkG{flex-wrap:nowrap;overflow-x:auto;margin:0;flex:0 0 auto}#pkG button{white-space:nowrap}
+.pxb{width:46px;height:46px;border-radius:9px;background:#fff;overflow:hidden;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);text-decoration:none;color:#0e141d;font-size:16px}.pxb img{width:100%;height:100%;object-fit:contain}
+.gxcr{margin:14px 0 6px;font-size:11px;color:var(--mut);text-align:center;line-height:1.4}
 .gxg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .gxc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px}
 .gxi{aspect-ratio:4/3;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:34px}
@@ -277,10 +279,14 @@ async function loadProg(){
   const box=$("progBox");if(!box)return;
   if(PROG===null){try{PROG=(await api("myprogram")).text}catch(e){PROG=""}}
   const days=parseProg(PROG),d=$("date").value;
+  const paint=()=>{
   if(!$("progBox"))return;
+  const op=[...document.querySelectorAll("#progBox details")].map(x=>x.open);
   $("progBox").innerHTML=days.length?`<h2>Programım</h2>`+days.map((g,i)=>{
     const gym=g.items.filter(x=>!x.cf).length;
-    return `<details class="card"><summary>${esc(g.name)} · ${g.items.length} hareket</summary>${g.items.map((x,j)=>x.cf?`<div class="item"><div class="n">🏋 ${esc(x.cf.name)} · ${esc(fmtName(x.cf.fmt))}<small>${esc(pText(x.cf.fmt,x.cf.p))}${x.cf.moves.length?" · "+esc(mText(x.cf.moves)):""}${x.cf.note?" — "+esc(x.cf.note):""}</small></div><button data-i="${i}" data-j="${j}" class="pcf">CrossFit'e yükle</button></div>`:`<div class="item"><div class="n">${esc(x.ex)}</div><b>${x.sets}×${x.reps}</b></div>`).join("")}${gym?`<button class="pri pday" data-i="${i}" style="width:100%;margin-top:8px">Bugüne ekle</button>`:""}</details>`}).join(""):"";
+    return `<details class="card"><summary>${esc(g.name)} · ${g.items.length} hareket</summary>${g.items.map((x,j)=>x.cf?`<div class="item"><div class="n">🏋 ${esc(x.cf.name)} · ${esc(fmtName(x.cf.fmt))}<small>${esc(pText(x.cf.fmt,x.cf.p))}${x.cf.moves.length?" · "+esc(mText(x.cf.moves)):""}${x.cf.note?" — "+esc(x.cf.note):""}</small></div><button data-i="${i}" data-j="${j}" class="pcf">CrossFit'e yükle</button></div>`:`<div class="item">${(m=>m&&m.im[0]?`<div class="pxb" data-i="${i}" data-j="${j}" title="Nasıl yapılır?"><img loading="lazy" data-gp="${esc(m.ip[0])}" src="${esc(m.im[0])}" alt="${esc(m.n)}"></div>`:`<a class="pxb" target="_blank" rel="noopener" title="YouTube'da ara" href="https://www.youtube.com/results?search_query=${encodeURIComponent(x.ex+" nasıl yapılır")}">▶</a>`)(gxFind(x.ex))}<div class="n">${esc(x.ex)}</div><b>${x.sets}×${x.reps}</b></div>`).join("")}${gym?`<button class="pri pday" data-i="${i}" style="width:100%;margin-top:8px">Bugüne ekle</button>`:""}</details>`}).join(""):"";
+  document.querySelectorAll("#progBox details").forEach((x,k)=>{if(op[k])x.open=true});
+  document.querySelectorAll("#progBox .pxb[data-i]").forEach(b=>b.onclick=()=>{const x=days[+b.dataset.i].items[+b.dataset.j],m=gxFind(x.ex);if(m)gxShow(m,{noAdd:1,sub:"Programındaki ad: "+x.ex})});
   document.querySelectorAll("#progBox .pday").forEach(b=>b.onclick=()=>{
     const g=days[+b.dataset.i];(S.work[d]=S.work[d]||[]).push(...g.items.filter(i=>!i.cf).map(i=>({ex:i.ex,sets:i.sets,reps:i.reps,kg:lastKg(i.ex)})));save();renderWork();
   });
@@ -288,6 +294,8 @@ async function loadProg(){
     const w=days[+b.dataset.i].items[+b.dataset.j].cf;
     CF={fmt:w.fmt,name:w.name,p:{...w.p},moves:w.moves.map(m=>({...m})),res:"",note:w.note};WMODE="cf";goTab("work");
   });
+  };
+  paint();if(!GX)gxLoad().then(()=>{if(GX&&GX.length)paint()});
 }
 
 /* ---------- Hareket kütüphanesi ---------- */
@@ -467,21 +475,63 @@ function renderCF(){
 }
 
 /* ---------- Hareket rehberi (açık lisanslı görseller) ---------- */
-const GDB="https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/";
+const GFORK="";/* yedek: kendi fork'unun adresi, örn. https://cdn.jsdelivr.net/gh/KULLANICI/free-exercise-db@main/ */
+const GBASES=(GFORK?[GFORK]:[]).concat(["https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/"]);
+const GDB=GBASES[GBASES.length-1];
+let GACT=0;
+const gxEnc=p=>String(p).split("/").map(encodeURIComponent).join("/");
+const gxU=p=>GBASES[Math.min(GACT,GBASES.length-1)]+"exercises/"+gxEnc(p);
+document.addEventListener("error",ev=>{const t=ev.target;if(t&&t.tagName==="IMG"&&t.dataset&&t.dataset.gp){const k=(+t.dataset.gk||0)+1;if(k<GBASES.length){t.dataset.gk=k;GACT=Math.max(GACT,k);t.src=GBASES[k]+"exercises/"+gxEnc(t.dataset.gp)}}},true);
+const GCR='<div class="gxcr">Görseller ve hareket listesi: free-exercise-db (Unlicense, kamu malı). Türkçe yapılış metinleri bu uygulamaya özeldir.</div>';
 const GM={chest:"Göğüs",lats:"Sırt","middle back":"Sırt","lower back":"Sırt",traps:"Sırt",shoulders:"Omuz",biceps:"Biceps",triceps:"Triceps",quadriceps:"Bacak",hamstrings:"Bacak",calves:"Bacak",adductors:"Bacak",abductors:"Bacak",glutes:"Kalça",abdominals:"Karın",forearms:"Diğer",neck:"Diğer"};
 const GMT={chest:"göğüs",lats:"kanat",shoulders:"omuz",biceps:"biceps",triceps:"triceps",quadriceps:"ön bacak",hamstrings:"arka bacak",calves:"baldır",glutes:"kalça",abdominals:"karın","middle back":"orta sırt","lower back":"bel",traps:"trapez",forearms:"ön kol",neck:"boyun",adductors:"iç bacak",abductors:"dış bacak"};
 const GEQ={"body only":"Vücut ağırlığı",barbell:"Halter",dumbbell:"Dumbbell",machine:"Makine",cable:"Kablo",kettlebells:"Kettlebell",bands:"Lastik","e-z curl bar":"EZ bar","medicine ball":"Medicine ball","exercise ball":"Pilates topu","foam roll":"Foam roll",other:"Diğer"};
 const GCH=["Favoriler","Hepsi","Göğüs","Sırt","Omuz","Biceps","Triceps","Bacak","Kalça","Karın","CrossFit","Diğer"];
 let GX=null,GI=[],GTMR=null;
+function gxMk(e,tr){const pm=e.pm||e.primaryMuscles||[];return {id:e.id||"",n:String(e.name||""),g:GM[pm[0]]||"Diğer",pm,sm:e.sm||e.secondaryMuscles||[],eq:e.eq||e.equipment||"",ins:tr?(e.tr||[]):(e.instructions||[]),en:!tr,ip:e.img||e.images||[],get im(){return this.ip.map(gxU)}}}
 async function gxLoad(){
   if(GX)return GX;
-  for(const u of [GDB+"dist/exercises.json","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json"]){
+  const srcs=[["exercises-tr.json",1],[GDB+"dist/exercises.json",0],["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json",0]];
+  for(const [u,tr] of srcs){
     try{
       const r=await fetch(u);if(!r.ok)continue;const j=await r.json();
-      if(Array.isArray(j)&&j.length){GX=j.map(e=>({n:String(e.name||""),g:GM[(e.primaryMuscles||[])[0]]||"Diğer",pm:e.primaryMuscles||[],sm:e.secondaryMuscles||[],eq:e.equipment||"",ins:e.instructions||[],im:(e.images||[]).map(x=>GDB+"exercises/"+String(x).split("/").map(encodeURIComponent).join("/"))})).filter(e=>e.n);return GX}
+      if(Array.isArray(j)&&j.length){GX=j.map(e=>gxMk(e,tr)).filter(e=>e.n);GXI=null;return GX}
     }catch(e){}
   }
   GX=[];return GX;
+}
+/* program adı -> hareket rehberi eşleştirme */
+let GXI=null;
+const GAL0={"bench press":"Barbell Bench Press - Medium Grip","incline bench press":"Barbell Incline Bench Press - Medium Grip","decline bench press":"Decline Barbell Bench Press","dumbbell fly":"Dumbbell Flyes","cable fly":"Cable Crossover","pec deck":"Butterfly","push-up":"Pushups","dips":"Dips - Chest Version","machine chest press":"Leverage Chest Press","landmine press":"Landmine 180's","deadlift":"Barbell Deadlift","barbell row":"Bent Over Barbell Row","dumbbell row":"One-Arm Dumbbell Row","t-bar row":"Lying T-Bar Row","seated row":"Seated Cable Rows","lat pulldown":"Wide-Grip Lat Pulldown","pull-up":"Pullups","back extension":"Hyperextensions (Back Extensions)","shrug":"Barbell Shrug","rack pull":"Rack Pulls","overhead press":"Standing Military Press","arnold press":"Arnold Dumbbell Press","lateral raise":"Side Lateral Raise","front raise":"Front Dumbbell Raise","rear delt fly":"Reverse Flyes","upright row":"Upright Barbell Row","dumbbell curl":"Dumbbell Bicep Curl","biceps curl":"Dumbbell Bicep Curl","hammer curl":"Hammer Curls","cable curl":"Standing Biceps Cable Curl","concentration curl":"Concentration Curls","skull crusher":"EZ-Bar Skullcrusher","overhead triceps extension":"Standing Dumbbell Triceps Extension","close-grip bench press":"Close-Grip Barbell Bench Press","triceps kickback":"Tricep Dumbbell Kickback","back squat":"Barbell Full Squat","squat":"Barbell Full Squat","front squat":"Front Barbell Squat","lunge":"Barbell Lunge","bulgarian split squat":"Split Squat with Dumbbells","leg extension":"Leg Extensions","leg curl":"Seated Leg Curl","calf raise":"Standing Calf Raises","step-up":"Dumbbell Step Ups","hip thrust":"Barbell Hip Thrust","glute bridge":"Barbell Glute Bridge","cable kickback":"Glute Kickback","abductor machine":"Thigh Abductor","adductor machine":"Thigh Adductor","crunch":"Crunches","leg raise":"Flat Bench Lying Leg Raise","ab wheel rollout":"Ab Roller","bicycle crunch":"Air Bike","mountain climber":"Mountain Climbers","v-up":"Jackknife Sit-Up","air squat":"Bodyweight Squat","kettlebell swing":"One-Arm Kettlebell Swings","sinav":"Pushups","barfiks":"Pullups","mekik":"Crunches","side plank":"","wall sit":"","hollow hold":""};
+const gxNorm=s=>String(s).toLowerCase().replace(/\u0307/g,"").replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim();
+const gxSing=t=>t.length>3&&t.endsWith("s")&&!t.endsWith("ss")?t.slice(0,-1):t;
+const gxToks=s=>gxNorm(s).split(" ").filter(Boolean).map(gxSing);
+const GAL=Object.fromEntries(Object.entries(GAL0).map(([k,v])=>[gxNorm(k),v]));
+function gxFind(name){
+  if(!GX||!GX.length||!name)return null;
+  if(!GXI){GXI={by:{},T:[]};GX.forEach((e,i)=>{GXI.by[gxNorm(e.n)]=i;GXI.T.push(new Set(gxToks(e.n)))})}
+  const n=gxNorm(name);
+  if(n in GAL){const a=GAL[n];if(!a)return null;const k=GXI.by[gxNorm(a)];return k===undefined?null:GX[k]}
+  if(GXI.by[n]!==undefined)return GX[GXI.by[n]];
+  const q=gxToks(name);if(q.length<2)return null;
+  let best=-1,bs=1e9;
+  GXI.T.forEach((t,i)=>{if(q.every(x=>t.has(x))){const d=t.size-q.length;if(d<bs){bs=d;best=i}}});
+  return best<0?null:GX[best];
+}
+function gxDetailHTML(e,fav,o){
+  o=o||{};
+  return `<button id="gxB" style="margin-bottom:8px">‹ Geri</button><div class="gxi big">${e.im[0]?`<img id="gxImg" data-gp="${esc(e.ip[0])}" src="${esc(e.im[0])}" alt="${esc(e.n)}">`:`<span>🏋</span>`}</div><h2>${esc(e.n)}</h2>${o.sub?`<small style="color:var(--mut);display:block">${esc(o.sub)}</small>`:""}<small style="color:var(--mut)">${e.pm.length?"Ana kas: "+esc(e.pm.map(m=>GMT[m]||m).join(", "))+". ":""}${e.sm.length?"Yardımcı: "+esc(e.sm.map(m=>GMT[m]||m).join(", "))+". ":""}${e.eq?"Ekipman: "+esc(GEQ[e.eq]||e.eq)+".":""}</small>${e.ins.length?`<div class="card" style="margin-top:8px"><b>${e.en?"Yapılışı (İngilizce)":"Yapılışı"}</b><ol style="margin:6px 0 0;padding-left:18px">${e.ins.map(x=>`<li style="margin-bottom:4px">${esc(x)}</li>`).join("")}</ol></div>`:""}<a class="gxy" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n+" nasıl yapılır")}">▶ YouTube'da nasıl yapılır</a><div class="row" style="margin-top:8px"><button id="gxFav">${fav.includes(e.n)?"★ Favoriden çıkar":"☆ Favoriye ekle"}</button>${o.noAdd?"":`<button class="pri" id="gxAdd">Antrenmana ekle</button>`}</div>${GCR}`;
+}
+function gxAnim(e){gxStop();if(e.ip.length>1){let k=0;GTMR=setInterval(()=>{const im=$("gxImg");if(!im){gxStop();return}k=(k+1)%e.ip.length;im.dataset.gp=e.ip[k];im.src=gxU(e.ip[k])},900)}}
+function gxShow(e,o){
+  const pk=$("pk");pk.hidden=false;const fav=()=>S.favx||(S.favx=[]);
+  const draw=()=>{
+    pk.innerHTML=`<div class="pkh"><b style="flex:1;align-self:center">Hareket</b><button id="gxX">Kapat</button></div><div id="gxL" class="pkl">${gxDetailHTML(e,fav(),o)}</div>`;
+    gxAnim(e);$("gxX").onclick=gxClose;$("gxB").onclick=gxClose;
+    $("gxFav").onclick=()=>{const f=fav(),x=f.indexOf(e.n);if(x>=0)f.splice(x,1);else f.push(e.n);save();draw()};
+    const a=$("gxAdd");if(a)a.onclick=()=>{const d=$("date").value;(S.work[d]=S.work[d]||[]).push({ex:e.n,sets:3,reps:10,kg:lastKg(e.n)});save();gxClose();if(tab==="work"&&WMODE==="gym")renderWork();else{WMODE="gym";goTab("work")}};
+  };
+  draw();
 }
 const gxStop=()=>{if(GTMR){clearInterval(GTMR);GTMR=null}};
 function gxClose(){gxStop();$("pk").hidden=true}
@@ -491,8 +541,8 @@ async function gxOpen(){
   pk.innerHTML=`<div class="pkh"><input id="gxQ" placeholder="Hareket veya kas ara (örn. curl, göğüs)"><button id="gxX">Kapat</button></div><div class="chips" id="gxG">${GCH.map(x=>`<button data-g="${x}" class="${x===g?"on":""}">${x==="Favoriler"?"★ Favoriler":x}</button>`).join("")}</div><div id="gxL" class="pkl"><div class="empty">Yükleniyor...</div></div>`;
   $("gxX").onclick=gxClose;
   const all=await gxLoad(),mapG=n=>n.startsWith("CrossFit")?"CrossFit":n;
-  const base=all.length?all:EXLIB.filter(e=>!e[1].startsWith("CrossFit")).map(e=>({n:e[0],g:mapG(e[1]),pm:[],sm:[],eq:"",ins:[],im:[]}));
-  const cfi=EXLIB.filter(e=>e[1].startsWith("CrossFit")).map(e=>({n:e[0],g:"CrossFit",pm:[],sm:[],eq:"",ins:[],im:[]}));
+  const base=all.length?all:EXLIB.filter(e=>!e[1].startsWith("CrossFit")).map(e=>({n:e[0],g:mapG(e[1]),pm:[],sm:[],eq:"",ins:[],im:[],ip:[]}));
+  const cfi=EXLIB.filter(e=>e[1].startsWith("CrossFit")).map(e=>({n:e[0],g:"CrossFit",pm:[],sm:[],eq:"",ins:[],im:[],ip:[]}));
   GI=base.concat(cfi);
   const note=all.length?"":`<div class="empty">Görsel veritabanına ulaşılamadı, hareketler görselsiz gösteriliyor. İnternet bağlantını kontrol edip tekrar aç.</div>`;
   const fav=()=>S.favx||(S.favx=[]);
@@ -500,12 +550,12 @@ async function gxOpen(){
     const q=$("gxQ").value.trim().toLowerCase();
     const L=GI.map((e,i)=>({e,i})).filter(({e})=>(g==="Hepsi"||(g==="Favoriler"?fav().includes(e.n):e.g===g))&&(!q||(e.n+" "+e.pm.join(" ")+" "+e.pm.map(m=>GMT[m]||"").join(" ")+" "+e.g).toLowerCase().includes(q)));
     const sh=L.slice(0,lim);
-    $("gxL").innerHTML=note+(sh.length?`<div class="gxg">${sh.map(({e,i})=>`<div class="gxc" data-i="${i}"><span class="gxs" data-f="${i}">${fav().includes(e.n)?"★":"☆"}</span><div class="gxi">${e.im[0]?`<img loading="lazy" src="${esc(e.im[0])}" alt="${esc(e.n)}">`:`<span>🏋</span>`}</div><b>${esc(e.n)}</b><small>${esc(e.g)}${e.pm[0]?" · "+esc(GMT[e.pm[0]]||e.pm[0]):""}</small></div>`).join("")}</div>${L.length>lim?`<button id="gxMore" style="width:100%;margin-top:8px">Daha fazla (${L.length-lim})</button>`:""}`:`<div class="empty">${g==="Favoriler"?"Henüz favorin yok. Kartlardaki ☆ işaretine bas.":"Sonuç yok."}</div>`);
+    $("gxL").innerHTML=note+(sh.length?`<div class="gxg">${sh.map(({e,i})=>`<div class="gxc" data-i="${i}"><span class="gxs" data-f="${i}">${fav().includes(e.n)?"★":"☆"}</span><div class="gxi">${e.im[0]?`<img loading="lazy" data-gp="${esc(e.ip[0])}" src="${esc(e.im[0])}" alt="${esc(e.n)}">`:`<span>🏋</span>`}</div><b>${esc(e.n)}</b><small>${esc(e.g)}${e.pm[0]?" · "+esc(GMT[e.pm[0]]||e.pm[0]):""}</small></div>`).join("")}</div>${L.length>lim?`<button id="gxMore" style="width:100%;margin-top:8px">Daha fazla (${L.length-lim})</button>`:""}`:`<div class="empty">${g==="Favoriler"?"Henüz favorin yok. Kartlardaki ☆ işaretine bas.":"Sonuç yok."}</div>`);
+  $("gxL").insertAdjacentHTML("beforeend",GCR);
   };
   const detail=i=>{
     const e=GI[i];gxStop();
-    $("gxL").innerHTML=`<button id="gxB" style="margin-bottom:8px">‹ Geri</button><div class="gxi big">${e.im[0]?`<img id="gxImg" src="${esc(e.im[0])}" alt="${esc(e.n)}">`:`<span>🏋</span>`}</div><h2>${esc(e.n)}</h2><small style="color:var(--mut)">${e.pm.length?"Ana kas: "+esc(e.pm.map(m=>GMT[m]||m).join(", "))+". ":""}${e.sm.length?"Yardımcı: "+esc(e.sm.map(m=>GMT[m]||m).join(", "))+". ":""}${e.eq?"Ekipman: "+esc(GEQ[e.eq]||e.eq)+".":""}</small>${e.ins.length?`<div class="card" style="margin-top:8px"><b>Yapılışı (İngilizce)</b><ol style="margin:6px 0 0;padding-left:18px">${e.ins.map(x=>`<li style="margin-bottom:4px">${esc(x)}</li>`).join("")}</ol></div>`:""}<a class="gxy" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n+" nasıl yapılır")}">▶ YouTube'da nasıl yapılır</a><div class="row" style="margin-top:8px"><button id="gxFav">${fav().includes(e.n)?"★ Favoriden çıkar":"☆ Favoriye ekle"}</button><button class="pri" id="gxAdd">Antrenmana ekle</button></div>`;
-    if(e.im.length>1){let k=0;GTMR=setInterval(()=>{const im=$("gxImg");if(!im){gxStop();return}k=(k+1)%e.im.length;im.src=e.im[k]},900)}
+    $("gxL").innerHTML=gxDetailHTML(e,fav());gxAnim(e);
     $("gxB").onclick=()=>{gxStop();list()};
     $("gxFav").onclick=()=>{const f=fav(),x=f.indexOf(e.n);if(x>=0)f.splice(x,1);else f.push(e.n);save();detail(i)};
     $("gxAdd").onclick=()=>{const d=$("date").value;(S.work[d]=S.work[d]||[]).push({ex:e.n,sets:3,reps:10,kg:lastKg(e.n)});save();gxClose();if(tab==="work"&&WMODE==="gym")renderWork();else{WMODE="gym";goTab("work")}};
