@@ -40,7 +40,7 @@ button.x,button.cbd{flex:0 0 auto;padding:4px 10px;color:var(--bad);border-color
 .macros{display:flex;gap:14px;color:var(--mut)}.macros b{color:var(--tx)}
 .prev{color:var(--kc);min-height:22px;margin-bottom:6px}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(36,48,68,.94);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;border:0;border-radius:0;background:none;padding:14px 0;color:var(--mut)}
+nav button{flex:1;min-width:0;border:0;border-radius:0;background:none;padding:14px 1px;font-size:12px;letter-spacing:0;color:var(--mut)}
 nav button.on{color:var(--ac);font-weight:700}
 .empty{color:var(--mut);padding:6px 0}
 svg{width:100%;height:auto}
@@ -883,7 +883,7 @@ function render(){
   $("navMem").hidden=!(SES&&SES.admin);
   ["home","work","food","meas","mem","acc"].forEach(t=>$("t-"+t).hidden=t!==tab);
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.t===tab));
-  const bn=({home:1,work:2,food:3,meas:4,acc:5})[tab],bo=({1:.18,2:.22,3:.15,4:.42,5:.12})[bn],fb=bn===5?1:bn;
+  const bn=({home:1,work:2,food:3,meas:4,acc:5,mem:6})[tab],bo=({1:.18,2:.22,3:.15,4:.42,5:.12,6:.45})[bn],fb=bn===5?1:bn===6?3:bn;
   const wd=typeof matchMedia==="function"&&matchMedia("(min-width:900px) and (min-aspect-ratio:1/1)").matches?"w":"";
   $("bg").style.backgroundImage=`linear-gradient(rgba(27,36,51,${bo}),rgba(27,36,51,${bo})),url(bg${bn}${wd}.jpg),url(bg${fb}${wd}.jpg)`;
   ({home:renderHome,work:renderWork,food:renderFood,meas:renderMeas,mem:renderMem,acc:renderAcc})[tab]();
@@ -1493,6 +1493,8 @@ const SV='<svg viewBox="0 0 200 140" fill="none" stroke="currentColor" stroke-wi
 const ART={
  lift:SV+'<path d="M20 28H180M100 60V92M100 60L72 28M100 60L128 28M100 92L84 128M100 92L116 128"/><rect x="22" y="10" width="8" height="36" rx="3" fill="currentColor"/><rect x="170" y="10" width="8" height="36" rx="3" fill="currentColor"/><circle cx="100" cy="46" r="9" fill="currentColor"/></svg>',
  run:SV+'<path d="M110 46L96 82M108 52L124 66L134 52M108 52L90 64L78 54M96 82L118 98L104 120M96 82L78 100L56 96M30 126H170"/><circle cx="118" cy="34" r="9" fill="currentColor"/></svg>',
+ tape:SV+'<circle cx="62" cy="72" r="42"/><circle cx="62" cy="72" r="14" fill="currentColor"/><path d="M104 72H196M104 100H196"/><path d="M122 100V86M140 100V78M158 100V86M176 100V78M194 100V86"/></svg>',
+ team:SV+'<circle cx="100" cy="40" r="15" fill="currentColor"/><path d="M70 118C70 80 130 80 130 118"/><circle cx="44" cy="60" r="11" fill="currentColor"/><path d="M22 118C22 94 66 94 66 118"/><circle cx="156" cy="60" r="11" fill="currentColor"/><path d="M134 118C134 94 178 94 178 118"/></svg>',
  pull:SV+'<path d="M40 20H160M44 20V130M156 20V130M80 20L84 36L92 52M120 20L116 36L108 52M100 50V86M100 86L94 112L108 126M100 86L106 110L92 124"/><circle cx="100" cy="34" r="9" fill="currentColor"/></svg>'
 };
 const heroBox=(a,t,sub)=>`<div class="hero">${ART[a]}<div><small>${esc(sub)}</small><h1>${esc(t)}</h1></div></div>`;
@@ -1564,7 +1566,7 @@ function renderMeas(){
   const have=MET.filter(([k])=>seriesOf(k).length);if(have.length&&!have.some(m=>m[0]===cm))cm=have[0][0];
   const gr=have.length?`<h2>Ölçüm grafiği</h2><div class="card"><div class="chips">${have.map(([k,l])=>`<button data-k="${k}" class="${k===cm?"on":""}">${l}</button>`).join("")}</div>${chartSvg(cm)}</div>`:"";
   const hist=byDate().reverse().map(e=>`<div class="item"><div class="n">${e.date}<small>${MET.filter(([k])=>e[k]!=null).map(([k,l,u])=>l+" "+e[k]+(u==="%"?"%":" "+u)).join(" · ")}</small></div><button class="x" data-d="${e.date}" aria-label="Sil">Sil</button></div>`).join("");
-  $("t-meas").innerHTML=`${heroBox("pull","Ölçümler","Boy, kilo ve vücut ölçülerin")}
+  $("t-meas").innerHTML=`${heroBox("tape","Ölçümler","Boy, kilo ve vücut ölçülerin")}
   <div class="card"><label class="fld" style="margin-bottom:8px"><small>Boy (cm)</small><input id="o_boy" type="number" inputmode="decimal" value="${boy}"></label>
   <div class="grid">${MET.map(m=>f(...m)).join("")}</div>
   <button class="pri" id="oSave" style="width:100%;margin-top:10px">${d} ölçümünü kaydet</button></div>
@@ -1672,7 +1674,7 @@ function altOpts(it){
 async function renderMem(){
   const el=$("t-mem");
   if(!MEM.sel){
-    el.innerHTML=`<h1>Üyeler</h1><div class="card" id="mlist">Yükleniyor...</div>`;
+    el.innerHTML=`${heroBox("team","Üyeler","Koç paneli")}<div class="card" id="mlist">Yükleniyor...</div>`;
     try{if(!MEM.list)MEM.list=(await api("summary",{today:isoD(new Date())})).members}catch(e){$("mlist").textContent=e.message;return}
     const today=isoD(new Date()),ago=x=>x?Math.round((new Date(today)-new Date(x))/864e5):null;
     const L=MEM.list.map(x=>({...x,ag:ago(x.last)}));
@@ -1682,7 +1684,7 @@ async function renderMem(){
     const act=L.filter(x=>!x.disabled),nmOf=x=>[x.name,x.surname].filter(Boolean).join(" ")||x.email,nl=l=>l.length?l.map(nmOf).map(esc).join(", "):"Hepsi girdi 👏";
     const hasMd=act.length&&act.every(x=>x.md!=null);
     const wkCard=act.length?`<h2>Bu hafta (son 7 gün)</h2><div class="card"><div class="macros"><span>Antrenman giren <b>${act.filter(x=>x.w7>0).length}/${act.length}</b></span>${hasMd?`<span>Yemek giren <b>${act.filter(x=>x.md>0).length}/${act.length}</b></span>`:""}</div><small style="color:var(--mut)">Antrenman girmeyenler: ${nl(act.filter(x=>!x.w7))}</small>${hasMd?`<small style="color:var(--mut);display:block;margin-top:4px">Yemek girmeyenler: ${nl(act.filter(x=>!x.md))}</small>`:""}</div>`:"";
-    el.innerHTML=`<h1>Üyeler</h1>${wkCard}<div class="chips" style="margin-top:8px"><button data-s="act" class="${MEM.sort==="name"?"":"on"}">Sessiz olanlar üstte</button><button data-s="name" class="${MEM.sort==="name"?"on":""}">Ada göre</button></div><div class="card" id="mlist">${LL.map((x,i)=>`<div class="item" data-i="${i}" style="cursor:pointer"><div class="n">${esc([x.name,x.surname].filter(Boolean).join(" ")||x.email)}${x.disabled?" <small>(pasif)</small>":""}${x.note&&!x.note.read?" 📝":""}<small>${esc(x.email)}${x.self?" · ben":""}</small>${x.self?"":`<small style="color:${x.ag==null||x.ag>=7?"var(--bad)":"var(--mut)"}">Son aktivite: ${when(x.ag)} · Antrenman ${x.w7}/7 · Öğün ${x.ate}✓ ${x.miss}✗${x.kg!=null?" · "+x.kg+" kg":""}</small>${x.md!=null?`<small style="color:var(--mut)">Yemek girilen gün ${x.md}/7${x.kc!=null?" · ort. "+x.kc+" kcal · P "+x.pr+" g":""}</small>`:""}`}</div><b>›</b></div>`).join("")}</div><button id="mBk" style="width:100%">Tüm üyelerin yedeğini indir</button><button id="mRf" style="width:100%;margin-top:8px">Listeyi yenile</button>`;
+    el.innerHTML=`${heroBox("team","Üyeler","Koç paneli")}${wkCard}<div class="chips" style="margin-top:8px"><button data-s="act" class="${MEM.sort==="name"?"":"on"}">Sessiz olanlar üstte</button><button data-s="name" class="${MEM.sort==="name"?"on":""}">Ada göre</button></div><div class="card" id="mlist">${LL.map((x,i)=>`<div class="item" data-i="${i}" style="cursor:pointer"><div class="n">${esc([x.name,x.surname].filter(Boolean).join(" ")||x.email)}${x.disabled?" <small>(pasif)</small>":""}${x.note&&!x.note.read?" 📝":""}<small>${esc(x.email)}${x.self?" · ben":""}</small>${x.self?"":`<small style="color:${x.ag==null||x.ag>=7?"var(--bad)":"var(--mut)"}">Son aktivite: ${when(x.ag)} · Antrenman ${x.w7}/7 · Öğün ${x.ate}✓ ${x.miss}✗${x.kg!=null?" · "+x.kg+" kg":""}</small>${x.md!=null?`<small style="color:var(--mut)">Yemek girilen gün ${x.md}/7${x.kc!=null?" · ort. "+x.kc+" kcal · P "+x.pr+" g":""}</small>`:""}`}</div><b>›</b></div>`).join("")}</div><button id="mBk" style="width:100%">Tüm üyelerin yedeğini indir</button><button id="mRf" style="width:100%;margin-top:8px">Listeyi yenile</button>`;
     document.querySelectorAll("#t-mem .chips button").forEach(b=>b.onclick=()=>{MEM.sort=b.dataset.s;renderMem()});
     document.querySelectorAll("#mlist .item").forEach(it=>it.onclick=()=>{MEM.sel=LL[+it.dataset.i];MEM.pack=null;renderMem()});
     $("mRf").onclick=()=>{MEM.list=null;renderMem()};
