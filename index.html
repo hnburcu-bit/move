@@ -522,6 +522,7 @@ function gxFind(name,exact){
   GXI.T.forEach((t,i)=>{if(q.every(x=>t.has(x))){const d=t.size-q.length;if(d<bs){bs=d;best=i}}});
   return best<0?null:GX[best];
 }
+const exBox=(ex,i)=>{const m=gxFind(ex);return m&&m.im[0]?`<div class="pxb wbx" data-i="${i}" title="Nasıl yapılır?"><img loading="lazy" data-gp="${esc(m.ip[0])}" src="${esc(m.im[0])}" alt="${esc(m.n)}"></div>`:`<a class="pxb wbx" data-i="${i}" target="_blank" rel="noopener" title="YouTube'da ara" href="https://www.youtube.com/results?search_query=${encodeURIComponent(ex+" nasıl yapılır")}">▶</a>`};
 const GCFV=n=>"https://www.youtube.com/results?search_query="+encodeURIComponent(n+" CrossFit movement standard");
 function cfChips(mv){
   const seen=new Set();
@@ -646,7 +647,7 @@ function renderWork(){
     <div class="row"><input id="wSet" type="number" inputmode="numeric" placeholder="Set"><input id="wRep" type="number" inputmode="numeric" placeholder="Tekrar"><input id="wKg" type="number" inputmode="decimal" placeholder="Kg"></div>
     <button class="pri" id="wAdd" style="width:100%">Hareketi ekle</button>
   </div>
-  <div class="card">${list.length?list.map((w,i)=>`<div class="item"><div class="n">${esc(w.ex)}<small>${w.sets} set × ${w.reps} tekrar · ${w.kg} kg · hacim ${w.sets*w.reps*w.kg} kg${isPR(w,d)?" · 🚀 Rekor":""}</small></div><button class="x" data-i="${i}" aria-label="Sil">Sil</button></div>`).join(""):`<div class="empty">Bu gün için hareket yok. Yukarıdan ilk hareketi ekle.</div>`}</div>
+  <div class="card">${list.length?list.map((w,i)=>`<div class="item">${exBox(w.ex,i)}<div class="n">${esc(w.ex)}<small>${w.sets} set × ${w.reps} tekrar · ${w.kg} kg · hacim ${w.sets*w.reps*w.kg} kg${isPR(w,d)?" · 🚀 Rekor":""}</small></div><button class="x" data-i="${i}" aria-label="Sil">Sil</button></div>`).join(""):`<div class="empty">Bu gün için hareket yok. Yukarıdan ilk hareketi ekle.</div>`}</div>
   ${exNames().length?`<h2>Hareket geçmişi</h2><div class="card"><select id="exSel" style="width:100%;margin-bottom:8px">${exNames().map(n=>`<option>${esc(n)}</option>`).join("")}</select><div id="exOut"></div></div>`:""}`;
   $("wAdd").onclick=()=>{
     const ex=$("wEx").value.trim(),sets=+$("wSet").value,reps=+$("wRep").value,kg=+$("wKg").value||0;
@@ -654,6 +655,11 @@ function renderWork(){
     (S.work[d]=S.work[d]||[]).push({ex,sets,reps,kg});save();renderWork();
   };
   loadProg();
+  const wLog=()=>S.work[$("date").value]||[];
+  const bindBoxes=()=>document.querySelectorAll("#t-work div.wbx").forEach(b=>b.onclick=()=>{const w=wLog()[+b.dataset.i],m=w&&gxFind(w.ex);if(m)gxShow(m,{noAdd:1,sub:"Antrenmandaki ad: "+w.ex})});
+  const paintBoxes=()=>{const L=wLog();document.querySelectorAll("#t-work .wbx").forEach(el=>{const i=+el.dataset.i;if(L[i])el.outerHTML=exBox(L[i].ex,i)});bindBoxes()};
+  bindBoxes();
+  if(!GX)gxLoad().then(()=>{if(GX&&GX.length)paintBoxes()});
   document.querySelectorAll("#t-work .tmb").forEach(b=>b.onclick=()=>tmStart(+b.dataset.s));
   if($("exSel")){$("exSel").onchange=showEx;showEx()}
   $("tAdd").onclick=()=>{
