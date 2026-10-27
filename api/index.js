@@ -48,7 +48,9 @@ function digest(D, dates7) {
   let ate = 0, miss = 0;
   dates7.forEach(d => Object.values((C[d] || {}).m || {}).forEach(v => { if (v === true) ate++; else if (v === false) miss++; }));
   const kgs = [...(D.meas || [])].filter(x => x.kg != null).sort((a, b) => a.date.localeCompare(b.date)), lk = kgs[kgs.length - 1];
-  return { last: [...act].sort().pop() || null, w7: dates7.filter(d => days.has(d)).length, ate, miss, kg: lk ? lk.kg : null };
+  let kn = 0, kk = 0, kp = 0;
+  dates7.forEach(d => { const L = M[d] || []; if (L.length) { kn++; kk += L.reduce((s, x) => s + (+x.kcal || 0), 0); kp += L.reduce((s, x) => s + (+x.p || 0), 0); } });
+  return { last: [...act].sort().pop() || null, w7: dates7.filter(d => days.has(d)).length, ate, miss, kg: lk ? lk.kg : null, md: kn, kc: kn ? Math.round(kk / kn) : null, pr: kn ? Math.round(kp / kn) : null };
 }
 
 module.exports = async (req, res) => {
@@ -126,9 +128,19 @@ module.exports = async (req, res) => {
       await redis(["HSET", ph, d, img]);
       return res.json({ ok: true });
     }
+    if (b.action === "getvideos") return res.json({ v: pj(await redis(["GET", "videos"])) || {} });
     if (b.action === "mydiet") { const d = await redis(["GET", "diet:" + u.e]); return res.json({ diet: d ? JSON.parse(d) : null }); }
     if (b.action === "myprogram") return res.json({ text: (await redis(["GET", "prog:" + u.e])) || "" });
     if (u.a) {
+      if (b.action === "setvideos") {
+        const src = b.v && typeof b.v === "object" ? b.v : {}, out = {};
+        for (const [k, x] of Object.entries(src).slice(0, 400)) {
+          const n = String((x && x.n) || "").slice(0, 80), url = String((x && x.u) || "").slice(0, 200), key = String(k).slice(0, 80);
+          if (key && n && /^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//.test(url)) out[key] = { n, u: url };
+        }
+        await redis(["SET", "videos", JSON.stringify(out)]);
+        return res.json({ ok: true });
+      }
       const tg = String(b.email || "").trim().toLowerCase();
       if (b.action === "summary") {
         const today = /^\d{4}-\d{2}-\d{2}$/.test(String(b.today || "")) ? b.today : new Date().toISOString().slice(0, 10);
@@ -188,10 +200,11 @@ module.exports = async (req, res) => {
         const n1 = v => Math.max(0, Math.min(99999, Math.round((+v || 0) * 10) / 10));
         const meals = (Array.isArray(x.meals) ? x.meals : []).slice(0, 12).map(m => ({
           name: String((m && m.name) || "Öğün").slice(0, 40),
-          items: (Array.isArray(m && m.items) ? m.items : []).slice(0, 40).map(i => ({ n: String((i && i.n) || "").slice(0, 80), g: n1(i && i.g), ...(i && i.q ? { q: String(i.q).slice(0, 60) } : {}), kcal: Math.round(n1(i && i.kcal)), p: n1(i && i.p), c: n1(i && i.c), f: n1(i && i.f) })).filter(i => i.n)
+          items: (Array.isArray(m && m.items) ? m.items : []).slice(0, 40).map(i => ({ n: String((i && i.n) || "").slice(0, 80), g: n1(i && i.g), ...(i && i.q ? { q: String(i.q).slice(0, 60) } : {}), ...(i && i.alt ? { alt: String(i.alt).slice(0, 200) } : {}), kcal: Math.round(n1(i && i.kcal)), p: n1(i && i.p), c: n1(i && i.c), f: n1(i && i.f) })).filter(i => i.n)
         })).filter(m => m.items.length);
-        const diet = { kcal: num(x.kcal), p: num(x.p), c: num(x.c), f: num(x.f), text: String(x.text || "").slice(0, 10000), meals };
-        if (!diet.kcal && !diet.p && !diet.c && !diet.f && !diet.text.trim() && !meals.length) await redis(["DEL", "diet:" + tg]); else await redis(["SET", "diet:" + tg, JSON.stringify(diet)]);
+        const water = Math.max(0, Math.min(30, Math.round(+x.water || 0)));
+        const diet = { kcal: num(x.kcal), p: num(x.p), c: num(x.c), f: num(x.f), ...(water ? { water } : {}), text: String(x.text || "").slice(0, 10000), meals };
+        if (!diet.kcal && !diet.p && !diet.c && !diet.f && !water && !diet.text.trim() && !meals.length) await redis(["DEL", "diet:" + tg]); else await redis(["SET", "diet:" + tg, JSON.stringify(diet)]);
         return res.json({ ok: true });
       }
       if (b.action === "getprogram") return res.json({ text: (await redis(["GET", "prog:" + String(b.email || "").trim().toLowerCase()])) || "" });
