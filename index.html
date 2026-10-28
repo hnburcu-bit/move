@@ -952,6 +952,7 @@ const EXG={
 "Bacak":["Back squat","Front squat","Goblet squat","Leg press","Lunge","Walking lunge","Bulgarian split squat","Romanian deadlift","Sumo deadlift","Leg extension","Leg curl","Calf raise","Hack squat","Step-up","Wall sit"],
 "Kalça":["Hip thrust","Glute bridge","Cable kickback","Good morning","Abductor machine","Adductor machine"],
 "Karın":["Plank","Side plank","Crunch","Sit-up","Leg raise","Hanging leg raise","Russian twist","Ab wheel rollout","Bicycle crunch","Cable crunch","Mountain climber","Hollow hold","V-up"],
+"Hyrox":["SkiErg","Sled Push","Sled Pull","Burpee Broad Jump","Row (kürek makinesi)","Farmers Carry","Sandbag Lunges","Wall Balls"],
 "Kardiyo":["Koşu bandı","Koşu","Bisiklet","Eliptik","Kürek makinesi","Yürüyüş","İp atlama","Yüzme","Merdiven makinesi"],
 "CrossFit · Halter":["Clean","Power clean","Squat clean","Hang clean","Hang power clean","Clean & jerk","Snatch","Power snatch","Squat snatch","Hang snatch","Hang power snatch","Muscle snatch","Overhead squat","Push press","Push jerk","Split jerk","Thruster","Sumo deadlift high pull","Barbell front-rack lunge","Barbell overhead lunge","Cluster","Clean pull","Snatch pull","Snatch balance","Zercher squat","Dumbbell snatch","Dumbbell clean","Dumbbell hang power clean","Dumbbell power snatch","Dumbbell thruster","Dumbbell overhead squat","Dumbbell front squat","Dumbbell squat clean","Devil press","Dumbbell burpee deadlift","Dumbbell front-rack lunge","Dumbbell overhead lunge","Dumbbell Z-press","Single-arm dumbbell thruster","Dumbbell box step-up"],
 "CrossFit · Jimnastik":["Kipping pull-up","Butterfly pull-up","Chest-to-bar pull-up","L-sit pull-up","Bar muscle-up","Ring muscle-up","Toes-to-bar","Knees-to-elbows","Hanging knee raise","Toes-to-rig","L-sit","Handstand hold","Handstand walk","Handstand push-up","Strict handstand push-up","Kipping handstand push-up","Deficit handstand push-up","Wall walk","Ring dip","Box dip","Parallel bar dip","Ring row","Inverted row","Hand-release push-up","Burpee","Bar-facing burpee","Burpee box jump-over","Burpee over the bar","Rope climb","Legless rope climb","Pegboard climb","Pistol","Air squat","Jump squat","AbMat sit-up","GHD sit-up","GHD hip extension","Hollow rock","Arch hold","Skin the cat"],
@@ -1120,6 +1121,33 @@ function renderCF(){
 
 
 /* ---------- Hyrox ---------- */
+const HXA=(()=>{
+ const W=(b)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140"><rect width="200" height="140" fill="#1b2433"/><path d="M0 121H200" stroke="#3a4a63" stroke-width="3"/><g fill="none" stroke="#2ec4b6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${b}</g></svg>`;
+ const A='stroke="#f5b73a"',F='fill="#f5b73a"';
+ return {
+ skierg:W(`<rect x="62" y="8" width="76" height="14" rx="5" ${A} fill="#3a4a63"/><circle cx="100" cy="15" r="4" ${F} stroke="none"/><path d="M76 22L82 32M124 22L118 32" ${A} stroke-width="2.5"/><circle cx="100" cy="46" r="8" fill="#2ec4b6" stroke="none"/><path d="M100 56V86M100 60L82 34M100 60L118 34M100 86L90 121M100 86L112 121"/><path d="M158 60V100M150 92L158 102L166 92" ${A} stroke-width="3"/>`),
+ sledpush:W(`<circle cx="76" cy="48" r="8" fill="#2ec4b6" stroke="none"/><path d="M72 58L48 94M48 94L30 121M48 94L68 108L62 121M74 62L106 78"/><path d="M92 120H176" ${A} stroke-width="5"/><path d="M104 120V68H146V120" ${A} stroke-width="4"/><rect x="112" y="96" width="38" height="18" rx="3" ${F} stroke="none"/><path d="M170 44H186M180 38L188 44L180 50" ${A} stroke-width="3"/>`),
+ sledpull:W(`<circle cx="62" cy="38" r="8" fill="#2ec4b6" stroke="none"/><path d="M64 48L50 86M50 86L70 104L66 121M50 86L38 104L28 121M62 52L90 66"/><path d="M90 66L146 106" ${A} stroke-width="2.5"/><path d="M134 120H190" ${A} stroke-width="5"/><rect x="146" y="96" width="34" height="18" rx="3" ${F} stroke="none"/><path d="M110 24H92M100 18L92 24L100 30" ${A} stroke-width="3"/>`),
+ burpee:W(`<circle cx="134" cy="52" r="8" fill="#2ec4b6" stroke="none"/><path d="M128 60L98 76M98 76L72 92L52 84M98 76L76 104L56 100M130 62L158 76"/><path d="M40 112Q100 20 160 112" ${A} stroke-width="2.5" stroke-dasharray="5 6"/><path d="M30 130H170M30 126V134M100 126V134M170 126V134" ${A} stroke-width="2.5"/>`),
+ row:W(`<path d="M24 112H184" ${A} stroke-width="4"/><circle cx="38" cy="96" r="16" fill="#3a4a63" ${A} stroke-width="4"/><circle cx="38" cy="96" r="4" ${F} stroke="none"/><rect x="104" y="104" width="22" height="7" rx="3" ${F} stroke="none"/><circle cx="98" cy="48" r="8" fill="#2ec4b6" stroke="none"/><path d="M104 58L112 100M112 100L82 92M82 92L58 104M104 66L70 80"/><path d="M54 96L70 80" ${A} stroke-width="2.5"/>`),
+ farmers:W(`<circle cx="100" cy="30" r="8" fill="#2ec4b6" stroke="none"/><path d="M100 40V80M100 80L88 121M100 80L114 121M100 48L80 90M100 48L120 90"/><circle cx="77" cy="102" r="11" ${F} stroke="none"/><circle cx="123" cy="102" r="11" ${F} stroke="none"/><path d="M70 94Q77 82 84 94M116 94Q123 82 130 94" ${A} stroke-width="3"/><path d="M150 60H176M168 54L176 60L168 66" ${A} stroke-width="3"/>`),
+ sandbag:W(`<circle cx="100" cy="38" r="8" fill="#2ec4b6" stroke="none"/><path d="M100 48V84M100 84L130 88L130 121M100 84L80 110L62 119M100 52L84 58M100 52L116 58"/><rect x="70" y="50" width="60" height="12" rx="6" ${F} stroke="none" transform="rotate(-6 100 56)"/>`),
+ wallball:W(`<path d="M172 6V121" stroke="#3a4a63" stroke-width="6"/><path d="M150 32H172" ${A} stroke-width="3" stroke-dasharray="4 4"/><circle cx="102" cy="52" r="8" fill="#2ec4b6" stroke="none"/><path d="M98 62L88 94M88 94L120 98L116 121M98 66L116 78"/><circle cx="124" cy="78" r="11" ${F} stroke="none"/><path d="M130 66Q160 40 166 34" ${A} stroke-width="2.5" stroke-dasharray="5 5"/>`)
+ };
+})();
+
+const HXG=[
+["SkiErg","skierg",["Makinenin önünde ayakları omuz genişliğinde aç, iki tutamağı kavra.","Kollar yukarıdayken başla; kalçadan hafifçe katlanarak tutamakları kalçalarına doğru çek.","Çekişi kollarla değil gövde ve kalçayla başlat, kollar sona eklensin.","Dizlerin hafif bükülü, sırtın düz kalsın.","Kontrollü şekilde yukarı dön ve ritmi bozmadan tekrarla."],["lats","abdominals"],["shoulders","triceps"],"machine"],
+["Sled Push","sledpush",["Kızağı iki elinle sap noktalarından tut, kollar neredeyse düz olsun.","Gövdeyi öne eğ, sırtın düz, bakışın yere yakın.","Kısa ve hızlı adımlarla, ayak uçlarından iterek ilerle.","Dizlerini kilitleme, adımları zemine doğru at.","Mesafeyi bitirene kadar duraksamadan it."],["quadriceps","glutes"],["calves","shoulders"],"other"],
+["Sled Pull","sledpull",["Kızağın karşısında dur, halatı iki elle kavra.","Hafifçe geriye yaslan ve ayaklarını sabit tut.","El üstüne el koyarak halatı kendine doğru çek; kollar ve sırt çalışır.","Kalçanı biraz alçak tut, dengeni kaybetme.","Kızak çizgiyi geçene kadar çekmeye devam et."],["lats","middle back"],["biceps","forearms"],"other"],
+["Burpee Broad Jump","burpee",["Ayakta başla, eğilip göğsünü yere indir (burpee).","Yerden iterek kalk ve ayaklarını ellerine doğru çek.","İki ayakla öne doğru uzun bir sıçrayış yap, kollarını savur.","Yumuşak in, tekrar yere eğil ve aynı hareketi tekrarla.","Her sıçrayışta önceki iniş çizgisini geç, mesafeyi kısaltma."],["chest","quadriceps"],["shoulders","triceps"],"body only"],
+["Row (kürek makinesi)","row",["Ayaklarını pedallara bağla, kolların öne uzanmış, dizlerin bükülü başla.","Önce bacaklarınla it, sonra gövdeni hafifçe geriye yatır, en son kollarla çek.","Tutamağı göğsünün alt kısmına getir.","Dönüşte sırayla kollar, gövde, dizler: akıcı git.","Dakikadaki çekiş sayısını (tempo) sabit tutmaya çalış."],["lats","quadriceps"],["biceps","middle back"],"machine"],
+["Farmers Carry","farmers",["İki kettlebell ya da ağırlığı yerden doğru formla kaldır.","Omuzların geride ve aşağıda, göğsün açık, karnın sıkı dur.","Kısa ve hızlı adımlarla, gövdeni sallamadan yürü.","Ağırlıkları vücuduna yakın tut, bileklerin nötr kalsın.","Mesafeyi bitirince kontrollü şekilde yere bırak, belini yuvarlama."],["forearms","traps"],["abdominals","glutes"],"kettlebells"],
+["Sandbag Lunges","sandbag",["Kum torbasını omuzlarının üstüne, ensene yakın yerleştir ve iki elle sabitle.","Büyük bir adım at, arka dizin yere yaklaşsın, ön diz ayak ucunu geçmesin.","Gövdeni dik tut, ön topuktan iterek kalk ve diğer bacağa geç.","Adımları eşit uzunlukta tut, yürüyerek ilerle.","Torbayı düşürmemeye ve gövdeni dik tutmaya odaklan."],["quadriceps","glutes"],["hamstrings","abdominals"],"other"],
+["Wall Balls","wallball",["Topu göğsünde iki elle tut, duvardan bir adım uzakta ayakların omuz genişliğinde dur.","Çömel, kalçan dizlerinin altına inecek kadar alçal.","Patlayıcı şekilde kalkarak topu duvardaki hedef çizgisinin üstüne fırlat.","Topu kolların arasına yumuşakça yakala ve hemen sonraki tekrara geç.","Dirseklerini düşürme, sırtını dik tut, kalkarken nefes ver."],["quadriceps","shoulders"],["glutes","triceps"],"medicine ball"]
+].map(([n,k,ins,pm,sm,eq])=>({id:"hx-"+k,n,g:"Hyrox",pm,sm,eq,ins,en:false,ip:[""],im:["data:image/svg+xml;utf8,"+encodeURIComponent(HXA[k])],k}));
+const HXIMG={1:"skierg",3:"sledpush",5:"sledpull",7:"burpee",9:"row",11:"farmers",13:"sandbag",15:"wallball"};
+const hxEnt=i=>HXIMG[i]?HXG.find(e=>e.k===HXIMG[i]):null;
 const HXD={"Open Erkek":{push:"152 kg",pull:"103 kg",farm:"2 × 24 kg",sand:"20 kg",wb:"6 kg"},"Open Kadın":{push:"102 kg",pull:"78 kg",farm:"2 × 16 kg",sand:"10 kg",wb:"4 kg"},"Pro Erkek":{push:"202 kg",pull:"153 kg",farm:"2 × 32 kg",sand:"30 kg",wb:"9 kg"},"Pro Kadın":{push:"152 kg",pull:"103 kg",farm:"2 × 24 kg",sand:"20 kg",wb:"6 kg"}};
 const HXS=[{n:"Koşu 1",r:1,d:"1 km"},{n:"SkiErg",d:"1000 m"},{n:"Koşu 2",r:1,d:"1 km"},{n:"Sled Push",d:"50 m",k:"push"},{n:"Koşu 3",r:1,d:"1 km"},{n:"Sled Pull",d:"50 m",k:"pull"},{n:"Koşu 4",r:1,d:"1 km"},{n:"Burpee Broad Jump",d:"80 m"},{n:"Koşu 5",r:1,d:"1 km"},{n:"Kürek",d:"1000 m"},{n:"Koşu 6",r:1,d:"1 km"},{n:"Farmers Carry",d:"200 m",k:"farm"},{n:"Koşu 7",r:1,d:"1 km"},{n:"Sandbag Lunges",d:"100 m",k:"sand"},{n:"Koşu 8",r:1,d:"1 km"},{n:"Wall Balls",d:"100 tekrar",k:"wb"}];
 const HXT=[
@@ -1157,7 +1185,7 @@ function renderHX(){
   if(R){
     const i=R.sp.length,t=HXS[i];
     live=`<div class="card"><b>Yarış devam ediyor · ${esc(R.div)}</b><div class="hxn" id="hxT">0:00:00</div><div style="text-align:center;color:var(--mut)">Bu bölüm: <b id="hxS" style="color:var(--tx)">0:00</b></div>
-    <div style="text-align:center;margin:10px 0"><small style="color:var(--mut)">Şimdi (${i+1}/16)</small><div class="hxn" style="font-size:28px">${t.n}</div><small>${esc(hxDesc(i,R.div))}</small>${i<15?`<small style="display:block;color:var(--mut);margin-top:4px">Sıradaki: ${HXS[i+1].n} · ${esc(hxDesc(i+1,R.div))}</small>`:""}</div>
+    <div style="text-align:center;margin:10px 0">${hxEnt(i)?`<div class="gxi big hxg" data-i="${i}"><img src="${hxEnt(i).im[0]}" alt="${esc(t.n)}"></div>`:""}<small style="color:var(--mut)">Şimdi (${i+1}/16)</small><div class="hxn" style="font-size:28px">${t.n}</div><small>${esc(hxDesc(i,R.div))}</small>${i<15?`<small style="display:block;color:var(--mut);margin-top:4px">Sıradaki: ${HXS[i+1].n} · ${esc(hxDesc(i+1,R.div))}</small>`:""}</div>
     <button class="pri" id="hxNext" style="width:100%">${i<15?"Bitti, sıradaki bölüm →":"Yarışı bitir"}</button>
     <div class="row" style="margin-top:8px"><button id="hxUndo">Geri al</button><button id="hxCancel" style="color:var(--bad)">Vazgeç</button></div>
     ${R.sp.length?`<small style="color:var(--mut);display:block;margin-top:8px">${R.sp.map((v,j)=>HXS[j].n+" "+hms(v)).join(" · ")}</small>`:""}</div>`;
@@ -1167,10 +1195,11 @@ function renderHX(){
   ${live||`<div class="card"><b>Yarış / simülasyon</b><small style="color:var(--mut);display:block;margin:4px 0 8px">Kronometreyi başlat, her bölümü bitirince sıradakine geç. Süreler otomatik kaydedilir.</small><button class="pri" id="hxGo" style="width:100%">⏱ Yarışı başlat</button>
   <details style="margin-top:8px"><summary>Süreleri elle gir (mm:ss)</summary><div class="grid" style="margin-top:8px">${HXS.map((t,i)=>`<label class="fld"><small>${t.n}</small><input data-h="${i}" placeholder="dk:sn" inputmode="numeric"></label>`).join("")}</div><label class="fld"><small>Toplam süre (boşsa bölümlerden hesaplanır, h:mm:ss)</small><input id="hxTot" placeholder="1:15:30"></label><div class="err" id="hxE"></div><button id="hxMan" style="width:100%;margin-top:8px">Kaydet</button></details></div>`}
   ${best?`<div class="card"><div class="macros"><span>${esc(div)} en iyi süren <b>${hms(best.t)}</b></span><span>${best.d}</span></div></div>`:""}
-  <h2>${esc(div)} standartları</h2><div class="card">${HXS.filter(t=>!t.r).map(t=>{const w=t.k?HXD[div][t.k]:"";return `<div class="item"><div class="n">${t.n}<small>${t.d}${w?" · "+w:""}</small></div></div>`}).join("")}<small style="color:var(--mut)">Her istasyondan önce 1 km koşu var, toplam 8 koşu + 8 istasyon. Etkinliğe göre ağırlık ve ölçüler değişebilir, resmi kurallara bak.</small></div>
+  <h2>${esc(div)} standartları</h2><div class="card">${HXS.map((t,i)=>{if(t.r)return"";const w=t.k?HXD[div][t.k]:"";return `<div class="item">${hxEnt(i)?`<div class="pxb hxg" data-i="${i}"><img src="${hxEnt(i).im[0]}" alt=""></div>`:""}<div class="n">${t.n}<small>${t.d}${w?" · "+w:""}</small></div></div>`}).join("")}<small style="color:var(--mut)">Her istasyondan önce 1 km koşu var, toplam 8 koşu + 8 istasyon. Etkinliğe göre ağırlık ve ölçüler değişebilir, resmi kurallara bak.</small></div>
   <h2>Hazır antrenmanlar</h2><div class="card"><select id="hxT_" style="width:100%">${HXT.map((t,i)=>`<option value="${i}">${esc(t.n)}</option>`).join("")}</select><div id="hxTd" style="margin:8px 0;color:var(--mut)"></div><input id="hxRes" placeholder="Sonuç (örn. 58:40 ya da 5 tur tamam)" style="width:100%;margin-bottom:8px"><input id="hxNt" placeholder="Not (isteğe bağlı)" style="width:100%;margin-bottom:8px"><button class="pri" id="hxLogT" style="width:100%">Antrenmanı kaydet</button></div>
   <h2>Bugünkü Hyrox kayıtları</h2><div class="card">${logs.length?logs.map(hxLog).join(""):`<div class="empty">Bu gün için kayıt yok.</div>`}</div>`;
   bindSeg();
+  document.querySelectorAll("#t-work .hxg").forEach(b=>b.onclick=()=>{const e=hxEnt(+b.dataset.i);if(e)gxShow(e,{noAdd:1})});
   document.querySelectorAll("#hxDiv button").forEach(b=>b.onclick=()=>{S.profile.hxDiv=b.dataset.d;save();renderHX()});
   const hd=()=>{const t=HXT[+$("hxT_").value];$("hxTd").textContent=t?t.d:""};$("hxT_").onchange=hd;hd();
   $("hxLogT").onclick=()=>{const t=HXT[+$("hxT_").value];if(!t)return;hxSave({k:"train",name:t.n,res:$("hxRes").value.trim(),note:$("hxNt").value.trim()});renderHX()};
@@ -1276,7 +1305,7 @@ const GCR='<div class="gxcr">Görseller ve hareket listesi: free-exercise-db (Un
 const GM={chest:"Göğüs",lats:"Sırt","middle back":"Sırt","lower back":"Sırt",traps:"Sırt",shoulders:"Omuz",biceps:"Biceps",triceps:"Triceps",quadriceps:"Bacak",hamstrings:"Bacak",calves:"Bacak",adductors:"Bacak",abductors:"Bacak",glutes:"Kalça",abdominals:"Karın",forearms:"Diğer",neck:"Diğer"};
 const GMT={chest:"göğüs",lats:"kanat",shoulders:"omuz",biceps:"biceps",triceps:"triceps",quadriceps:"ön bacak",hamstrings:"arka bacak",calves:"baldır",glutes:"kalça",abdominals:"karın","middle back":"orta sırt","lower back":"bel",traps:"trapez",forearms:"ön kol",neck:"boyun",adductors:"iç bacak",abductors:"dış bacak"};
 const GEQ={"body only":"Vücut ağırlığı",barbell:"Halter",dumbbell:"Dumbbell",machine:"Makine",cable:"Kablo",kettlebells:"Kettlebell",bands:"Lastik","e-z curl bar":"EZ bar","medicine ball":"Medicine ball","exercise ball":"Pilates topu","foam roll":"Foam roll",other:"Diğer"};
-const GCH=["Favoriler","Hepsi","Göğüs","Sırt","Omuz","Biceps","Triceps","Bacak","Kalça","Karın","CrossFit","Diğer"];
+const GCH=["Favoriler","Hepsi","Göğüs","Sırt","Omuz","Biceps","Triceps","Bacak","Kalça","Karın","CrossFit","Hyrox","Diğer"];
 let GX=null,GI=[],GTMR=null;
 function gxMk(e,tr){const pm=e.pm||e.primaryMuscles||[];return {id:e.id||"",n:String(e.name||""),g:GM[pm[0]]||"Diğer",pm,sm:e.sm||e.secondaryMuscles||[],eq:e.eq||e.equipment||"",ins:tr?(e.tr||[]):(e.instructions||[]),en:!tr,ip:e.img||e.images||[],get im(){return this.ip.map(gxU)}}}
 async function gxLoad(){
@@ -1285,7 +1314,7 @@ async function gxLoad(){
   for(const [u,tr] of srcs){
     try{
       const r=await fetch(u);if(!r.ok)continue;const j=await r.json();
-      if(Array.isArray(j)&&j.length){GX=j.map(e=>gxMk(e,tr)).filter(e=>e.n);GXI=null;return GX}
+      if(Array.isArray(j)&&j.length){GX=j.map(e=>gxMk(e,tr)).filter(e=>e.n);GX.push(...HXG);GXI=null;return GX}
     }catch(e){}
   }
   GX=[];return GX;
@@ -1666,6 +1695,7 @@ function chartSvgS(s){
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Ölçüm grafiği"><polyline fill="none" stroke="#2ec4b6" stroke-width="3" points="${pts.map(p=>p.join(",")).join(" ")}"/>${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#2ec4b6"/><text x="${p[0]}" y="${p[1]-8}" text-anchor="middle" font-size="10" fill="#eaf0f7">${v[i]}</text>`).join("")}<text x="2" y="${H-4}" font-size="10" fill="#9fb0c8">${s[0].date.slice(5)}</text><text x="${W-2}" y="${H-4}" text-anchor="end" font-size="10" fill="#9fb0c8">${s[s.length-1].date.slice(5)}</text></svg>`;
 }
 function renderHome(){
+  bfBackfill();
   const P=S.profile||{},name=[P.name,P.surname].filter(Boolean).join(" ");
   const cards=MET.map(([k,l,u])=>{
     const s=seriesOf(k);if(!s.length)return"";
@@ -1725,16 +1755,29 @@ function bfNavy(c,boy,bel,boyun,kalca){
   else{if(!kalca||bel+kalca<=boyun)return null;v=495/(1.29579-0.35004*Math.log10(bel+kalca-boyun)+0.221*Math.log10(boy))-450}
   return v>=2&&v<=60?Math.round(v*10)/10:null;
 }
+function bfBackfill(){
+  const c=(S.profile||{}).cins,boy=(S.profile||{}).boy;if(!c||!boy||!S.meas.length)return;
+  const nk=S.meas.filter(x=>x.boyun>0);let ch=false;
+  S.meas.forEach(e=>{
+    if(e.yag!=null&&!e.yagEst)return;
+    let nb=e.boyun,borrowed=false;
+    if(!nb&&nk.length){nb=nk.reduce((a,b)=>Math.abs(new Date(b.date)-new Date(e.date))<Math.abs(new Date(a.date)-new Date(e.date))?b:a).boyun;borrowed=true}
+    const v=bfNavy(c,boy,e.bel,nb,e.kalca);
+    if(v!=null&&(e.yag!==v||!e.yagEst||!!e.yagNeck!==borrowed)){e.yag=v;e.yagEst=true;if(borrowed)e.yagNeck=true;else delete e.yagNeck;ch=true}
+  });
+  if(ch)save();
+}
 function renderMeas(){
+  bfBackfill();
   const d=$("date").value,cur=S.meas.find(x=>x.date===d)||{},boy=(S.profile||{}).boy||"";
   const f=(k,l,u)=>`<label class="fld"><small>${l} (${u})</small><input id="o_${k}" type="number" inputmode="decimal" step="0.1" value="${cur[k]??""}"></label>`;
   const have=MET.filter(([k])=>seriesOf(k).length);if(have.length&&!have.some(m=>m[0]===cm))cm=have[0][0];
   const gr=have.length?`<h2>Ölçüm grafiği</h2><div class="card"><div class="chips">${have.map(([k,l])=>`<button data-k="${k}" class="${k===cm?"on":""}">${l}</button>`).join("")}</div>${chartSvg(cm)}</div>`:"";
-  const hist=byDate().reverse().map(e=>`<div class="item"><div class="n">${e.date}<small>${MET.filter(([k])=>e[k]!=null).map(([k,l,u])=>l+" "+(k==="yag"&&e.yagEst?"~":"")+e[k]+(u==="%"?"%":" "+u)+(k==="yag"&&e.yagEst?" (tahmini)":"")).join(" · ")}</small></div><button class="x" data-d="${e.date}" aria-label="Sil">Sil</button></div>`).join("");
+  const hist=byDate().reverse().map(e=>`<div class="item"><div class="n">${e.date}<small>${MET.filter(([k])=>e[k]!=null).map(([k,l,u])=>l+" "+(k==="yag"&&e.yagEst?"~":"")+e[k]+(u==="%"?"%":" "+u)+(k==="yag"&&e.yagEst?(e.yagNeck?" (tahmini, boyun başka ölçümden alındı)":" (tahmini)"):"")).join(" · ")}</small></div><button class="x" data-d="${e.date}" aria-label="Sil">Sil</button></div>`).join("");
   $("t-meas").innerHTML=`${heroBox("tape","Ölçümler","Boy, kilo ve vücut ölçülerin")}
   <div class="card"><div class="grid" style="margin-bottom:8px"><label class="fld"><small>Boy (cm)</small><input id="o_boy" type="number" inputmode="decimal" value="${boy}"></label><label class="fld"><small>Cinsiyet (yağ hesabı için)</small><select id="o_cins"><option value="">Seç</option><option value="E" ${(S.profile||{}).cins==="E"?"selected":""}>Erkek</option><option value="K" ${(S.profile||{}).cins==="K"?"selected":""}>Kadın</option></select></label></div>
   <div class="grid">${MET.map(m=>f(...m)).join("")}</div>
-  <div class="card" style="margin:10px 0 0;background:rgba(46,196,182,.08)"><b>Tahmini yağ oranı</b><div id="bfP" style="margin-top:4px"></div><small style="color:var(--mut)">Boyun ve bel (kadınlarda kalça da) ölçülerinden hesaplanır. Yağ oranı kutusunu boş bırakırsan kaydederken otomatik yazılır. Yaklaşık bir değerdir, cihaz ölçümü kadar kesin değildir.</small></div>
+  <div class="card" style="margin:10px 0 0;background:rgba(46,196,182,.08)"><b>Tahmini yağ oranı</b><div id="bfP" style="margin-top:4px"></div><small style="color:var(--mut)">Boyun ve bel (kadınlarda kalça da) ölçülerinden hesaplanır. Yağ oranı kutusunu boş bırakırsan kaydederken otomatik yazılır. Geçmiş ölçümlerde boyun yoksa en yakın tarihli boyun ölçün kullanılır. Yaklaşık bir değerdir, cihaz ölçümü kadar kesin değildir.</small></div>
   <button class="pri" id="oSave" style="width:100%;margin-top:10px">${d} ölçümünü kaydet</button></div>
   <div class="card">${hist||`<div class="empty">Henüz ölçüm yok.</div>`}</div>
   ${gr}
