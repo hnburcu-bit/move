@@ -25,7 +25,7 @@ function same(a, b) {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 const hashPw = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString("hex");
-const CH = ["work", "meals", "checks", "water", "cf"];
+const CH = ["work", "meals", "checks", "water", "cf", "hy", "med"];
 const pj = s => { try { return s ? JSON.parse(s) : null; } catch (e) { return null; } };
 async function loadAll(email) {
   const core = pj(await redis(["GET", "data:" + email]));
@@ -44,6 +44,8 @@ function digest(D, dates7) {
   Object.keys(W).forEach(d => { if ((W[d] || []).length) { days.add(d); act.add(d); } });
   Object.keys(M).forEach(d => { if ((M[d] || []).length) act.add(d); });
   Object.keys(D.cf || {}).forEach(d => { if ((D.cf[d] || []).length) { days.add(d); act.add(d); } });
+  Object.keys(D.hy || {}).forEach(d => { if ((D.hy[d] || []).length) { days.add(d); act.add(d); } });
+  Object.keys(D.med || {}).forEach(d => { if ((D.med[d] || []).length) act.add(d); });
   Object.keys(C).forEach(d => { act.add(d); if (C[d].w === true) days.add(d); else if (C[d].w === false) days.delete(d); });
   let ate = 0, miss = 0;
   dates7.forEach(d => Object.values((C[d] || {}).m || {}).forEach(v => { if (v === true) ate++; else if (v === false) miss++; }));
@@ -231,7 +233,4 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: "Sunucu hatası" });
   }
 };
-
-
-
 
