@@ -103,7 +103,7 @@ svg{width:100%;height:auto}
 .gxs{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.6);color:#ffd166;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px}
 .alt{color:var(--ac)}
 #langbar{display:flex;justify-content:flex-end;margin:0 0 6px}.lg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:rgba(36,48,68,.6)}.lg button{min-width:0;padding:5px 12px;font-size:12px;letter-spacing:0;border:0;border-radius:0;background:none;color:var(--mut)}.lg button.on{background:var(--ac);color:#06201d;font-weight:700}#login>.lg{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:2}
-.seg{gap:6px}.seg button{min-width:0;padding:10px 0;font-size:10.5px;letter-spacing:0;white-space:nowrap}
+.seg{gap:4px}.seg button{min-width:0;padding:10px 0;font-size:9.5px;letter-spacing:0;white-space:nowrap}
 #mdC{width:150px;height:150px;border-radius:50%;margin:16px auto;display:flex;align-items:center;justify-content:center;text-align:center;border:3px solid var(--ac);background:rgba(46,196,182,.12);font-weight:700;transition:transform 1s ease}
 .hxn{font-size:34px;font-weight:800;text-align:center;margin:6px 0}
 .sug{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 8px}.sug button{padding:6px 12px;border-radius:20px;color:var(--tx);text-transform:none;letter-spacing:0;font-family:inherit}
@@ -832,7 +832,7 @@ const PORT={
 "Kokteyl (tatlı, karışık)":[["1 bardak",200]]
 };
 const LEGACY="spor-takip-v1",TK="move-session";
-const EMPTY=()=>({work:{},meals:{},weights:[],custom:{},goal:2500,meas:[],profile:{},tpl:[],checks:{},water:{},cf:{},combos:[],hy:{},med:{},cal:{}});
+const EMPTY=()=>({work:{},meals:{},weights:[],custom:{},goal:2500,meas:[],profile:{},tpl:[],checks:{},water:{},cf:{},combos:[],hy:{},med:{},cal:{},rec:{},pdone:{}});
 let S=EMPTY(),SES=JSON.parse(localStorage.getItem(TK)||"null"),timer;
 async function api(action,body){
   const r=await fetch("/api",{method:"POST",headers:{"Content-Type":"application/json",...(SES?{Authorization:"Bearer "+SES.token}:{})},body:JSON.stringify({action,...body})});
@@ -840,7 +840,7 @@ async function api(action,body){
   if(!r.ok){if(r.status===401&&SES&&action!=="login")logout();throw new Error(j.error||"Bağlantı hatası")}
   return j;
 }
-const CHK=["work","meals","checks","water","cf","hy","med","cal"];
+const CHK=["work","meals","checks","water","cf","hy","med","cal","rec"];
 let SYNC={core:null,months:{}};
 function splitS(){
   const core={...S};CHK.forEach(k=>delete core[k]);
@@ -868,11 +868,11 @@ async function flush(){
 }
 function fixS(){
   S.meas=S.meas||(S.weights||[]).map(w=>({date:w.date,kg:w.kg}));
-  S.profile=S.profile||{};S.tpl=S.tpl||[];S.checks=S.checks||{};S.water=S.water||{};S.cf=S.cf||{};S.favx=S.favx||[];S.combos=S.combos||[];S.hy=S.hy||{};S.med=S.med||{};S.cal=S.cal||{};
+  S.profile=S.profile||{};S.tpl=S.tpl||[];S.checks=S.checks||{};S.water=S.water||{};S.cf=S.cf||{};S.favx=S.favx||[];S.combos=S.combos||[];S.hy=S.hy||{};S.med=S.med||{};S.cal=S.cal||{};S.rec=S.rec||{};S.pdone=S.pdone||{};
   if(SES&&!S.profile.name&&SES.name){S.profile.name=SES.name;S.profile.surname=SES.surname||""}
   if(S.profile.lang&&S.profile.lang!==LANG&&typeof setLang==="function")setLang(S.profile.lang,false);
 }
-function logout(){PROG=null;DIET=undefined;NOTE=undefined;SYNC={core:null,months:{}};MEM={list:null,sel:null,pack:null,cm:"kg"};localStorage.removeItem(TK);SES=null;S=EMPTY();$("login").hidden=false}
+function logout(){PLAN=undefined;PROG=null;DIET=undefined;NOTE=undefined;SYNC={core:null,months:{}};MEM={list:null,sel:null,pack:null,cm:"kg"};localStorage.removeItem(TK);SES=null;S=EMPTY();$("login").hidden=false}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const r1=n=>Math.round(n*10)/10;
@@ -1155,8 +1155,8 @@ function bindTB(){
 let WMODE="gym",WT=null;
 const FD={amrap:{min:20},emom:{min:20,every:1},fortime:{cap:0},rft:{rounds:5,cap:0},ladder:{scheme:"21-15-9",cap:0},chipper:{cap:0},tabata:{rounds:8,work:20,rest:10},max:{min:5},deathby:{}};
 let CF={fmt:"amrap",name:"",p:{...CFDEF,...FD.amrap},moves:[],res:"",note:""};
-const segHTML=m=>`<div class="seg">${[["gym","Klasik"],["cf","CrossFit"],["hy","Hyrox"],["med","Meditasyon"],["cal","Calisthenics"]].map(([k,l])=>`<button data-m="${k}" class="${m===k?"on":""}">${l}</button>`).join("")}</div>`;
-function bindSeg(){document.querySelectorAll("#t-work .seg button").forEach(b=>b.onclick=()=>{WMODE=b.dataset.m;renderWork()})}
+const segHTML=m=>`<div class="seg">${[["gym","Klasik"],["cf","CrossFit"],["hy","Hyrox"],["med","Meditasyon"],["cal","Calisthenics"],["rec","Recovery"]].map(([k,l])=>`<button data-m="${k}" class="${m===k?"on":""}">${l}</button>`).join("")}</div><div id="planBox"></div>`;
+function bindSeg(){document.querySelectorAll("#t-work .seg button").forEach(b=>b.onclick=()=>{WMODE=b.dataset.m;renderWork()});fillPlan()}
 const mmss=x=>{x=Math.max(0,Math.round(x));return Math.floor(x/60)+":"+String(x%60).padStart(2,"0")};
 const fmtName=id=>(CFMT.find(f=>f.id===id)||{n:id}).n;
 const pText=(f,p)=>({amrap:`${p.min} dk`,emom:`${p.min} dk, her ${p.every} dk`,fortime:p.cap?`sınır ${p.cap} dk`:"",rft:`${p.rounds} tur`+(p.cap?`, sınır ${p.cap} dk`:""),ladder:`${p.scheme}`+(p.cap?`, sınır ${p.cap} dk`:""),chipper:p.cap?`sınır ${p.cap} dk`:"",tabata:`${p.rounds}×(${p.work}/${p.rest} sn)`,max:p.min?`${p.min} dk`:"",deathby:""})[f]||"";
@@ -1489,6 +1489,85 @@ function renderMed(){
   if(R)medTick();
 }
 
+/* ---------- Recovery ve Haftalık plan ---------- */
+const RECG=[["yoga","Yoga"],["es","Esneme"],["fr","Foam roller"],["mo","Mobilite"],["sc","Sıcak, soğuk ve masaj"],["hf","Hafif hareket"]];
+const RECT=[
+ {id:"y1",g:"yoga",n:"Sabah yoga akışı",min:15,st:["Çocuk pozu: 1 dk","Kedi-inek: 10 tekrar","Aşağı bakan köpek: 1 dk","Alçak hamle: her yanda 1 dk","Oturarak öne eğilme: 1 dk","Sırtüstü uzanıp gevşeme: 2 dk"]},
+ {id:"y2",g:"yoga",n:"Akşam yoga (gevşeme)",min:20,st:["Kelebek pozu: 2 dk","Sırtüstü omurga bükme: her yanda 2 dk","Bacakları duvara dayama: 5 dk","Çocuk pozu: 2 dk","Sırtüstü uzanıp gevşeme: 5 dk"]},
+ {id:"y3",g:"yoga",n:"Güç yogası akışı",min:30,st:["Güneşe selam: 5 tur","Savaşçı pozu: her yanda 1 dk","Sandalye pozu: 45 sn, 3 tekrar","Plank: 45 sn, 3 tekrar","Köprü pozu: 1 dk, 3 tekrar","Sırtüstü uzanıp gevşeme: 3 dk"]},
+ {id:"e1",g:"es",n:"Tüm vücut esneme",min:15,st:["Boyun yana esneme: her yanda 30 sn","Göğüs esnetme (kapı kenarında): 30 sn","Omuz çapraz esneme: her kolda 30 sn","Ön uyluk esneme: her bacakta 30 sn","Arka uyluk esneme: her bacakta 30 sn","Kalça esneme (güvercin): her yanda 45 sn","Baldır esneme (duvarda): her bacakta 30 sn"]},
+ {id:"e2",g:"es",n:"Alt vücut esneme",min:12,st:["Ön uyluk esneme: her bacakta 40 sn","Arka uyluk esneme: her bacakta 40 sn","Kalça bükücü esneme: her yanda 40 sn","Kalça dışı esneme: her yanda 40 sn","Baldır esneme: her bacakta 40 sn"]},
+ {id:"e3",g:"es",n:"Sırt ve omuz esneme",min:10,st:["Çocuk pozu, kollar ileride: 1 dk","Göğüs esnetme (kapı kenarında): 40 sn","Omuz çapraz esneme: her kolda 30 sn","Triseps esneme: her kolda 30 sn","Oturarak gövde bükme: her yanda 30 sn"]},
+ {id:"f1",g:"fr",n:"Bacak foam roller",min:10,st:["Baldır: her bacakta 1 dk","Arka uyluk: her bacakta 1 dk","Ön uyluk: her bacakta 1 dk","Dış uyluk: her bacakta 30 sn, hafif baskıyla","Ağrılı noktada 20-30 sn bekle, nefes ver"]},
+ {id:"f2",g:"fr",n:"Sırt ve kalça foam roller",min:8,st:["Üst sırt: 1 dk","Yan sırt: her yanda 45 sn","Kalça kası: her yanda 1 dk","Bel bölgesinde yuvarlanma, üst sırtta kal"]},
+ {id:"m1",g:"mo",n:"Kalça mobilitesi",min:10,st:["90/90 geçişi: 10 tekrar","Derin çömelmede bekleme: 1 dk","Kalça çemberi: her yönde 10 tekrar","Kalça açma hamlesi: her yanda 5 tekrar"]},
+ {id:"m2",g:"mo",n:"Omuz ve sırt mobilitesi",min:8,st:["Duvarda kol kaydırma: 10 tekrar","İğne deliğinden geçirme: her yanda 8 tekrar","Omuz çemberleri: 10 tekrar","Kedi-inek: 10 tekrar"]},
+ {id:"m3",g:"mo",n:"Ayak bileği ve diz mobilitesi",min:8,st:["Duvarda diz ileri itme: her ayakta 10 tekrar","Ayak bileği çemberi: her yönde 10 tekrar","Derin çömelmede bekleme: 1 dk","Baldır esneme: her bacakta 30 sn"]},
+ {id:"s1",g:"sc",n:"Sauna",min:15,st:["Öncesinde ve sonrasında su iç","10-20 dk yeterli, kendini kötü hissedersen hemen çık","Sonrasında yavaşça serinle"]},
+ {id:"s2",g:"sc",n:"Soğuk duş veya buz banyosu",min:5,st:["Soğuk suya yavaş alış, 2-5 dk yeterli","Nefesini yavaş ve düzenli tut","Kas büyütmek istiyorsan ağırlık antrenmanından hemen sonra yapma","Kalp, tansiyon sorunun varsa doktoruna sor"]},
+ {id:"s3",g:"sc",n:"Masaj veya kendi kendine masaj",min:20,st:["Masaj topu, tabanca veya elinle yorgun bölgeleri çalış","Her bölgede 1-2 dk kal","Kemik ve eklem üstüne baskı yapma, ağrı olursa bırak"]},
+ {id:"h1",g:"hf",n:"Hafif yürüyüş",min:30,st:["Rahat konuşabileceğin tempoda yürü","Omuzlarını gevşek tut","Mümkünse dışarıda yürü"]},
+ {id:"h2",g:"hf",n:"Nefes ve gevşeme",min:10,st:["Rahat bir pozisyon al","4 sn nefes al, 6 sn ver: 5 dk","Vücudunu baştan ayağa tara, gerginliği bırak: 5 dk"]},
+ {id:"h3",g:"hf",n:"Hafif bisiklet veya yüzme",min:25,st:["Nabzı düşük tut, rahat konuşabil","Direnci düşük tut","Esneyerek bitir"]}
+];
+let RCS={g:"yoga"};
+const recShort=e=>"🧘 "+esc(trT(e.name||""))+" · "+(e.min||0)+" dk";
+function renderREC(){
+  const d=$("date").value,logs=S.rec[d]||[],G=RECG.find(x=>x[0]===RCS.g)||RECG[0];
+  const days=[];for(let i=6;i>=0;i--){const t=new Date(d);t.setDate(t.getDate()-i);days.push(isoD(t))}
+  const mins=x=>(S.rec[x]||[]).reduce((a,e)=>a+(+e.min||0),0),wm=days.reduce((a,x)=>a+mins(x),0),wd=days.filter(x=>mins(x)>0).length,wn=days.reduce((a,x)=>a+(S.rec[x]||[]).length,0);
+  $("t-work").innerHTML=`${heroBox("rec","Recovery","Toparlanma ve esneme")}${segHTML("rec")}
+  <div class="chips" id="rcG">${RECG.map(([k,l])=>`<button data-g="${k}" class="${k===G[0]?"on":""}">${l}</button>`).join("")}</div>
+  ${RECT.filter(x=>x.g===G[0]).map(x=>`<details class="card"><summary><b>${x.n}</b> <small>${x.min} dk</small></summary><ol style="margin:8px 0 8px 18px;padding:0">${x.st.map(s=>`<li>${s}</li>`).join("")}</ol><div class="row"><input class="rcM" type="number" inputmode="numeric" value="${x.min}" data-id="${x.id}"><button class="rcA pri" data-id="${x.id}" style="flex:1.4">Yaptım</button></div></details>`).join("")}
+  <div class="card"><b>Serbest kayıt</b><small style="display:block;color:var(--mut);margin:4px 0 8px">Listede olmayan bir recovery seansı ekle.</small><div class="row"><input id="rcN" placeholder="Ad (örn. Pilates)"><input id="rcMin" type="number" inputmode="numeric" placeholder="Dakika" style="flex:.6"></div><button id="rcAdd" style="width:100%">Ekle</button></div>
+  <h2>Son 7 gün</h2><div class="card"><div class="macros"><span>Seans <b>${wn}</b></span><span>Toplam <b>${wm} dk</b></span><span>Gün <b>${wd}/7</b></span></div></div>
+  <h2>Bugünkü seanslar</h2><div class="card">${logs.length?logs.map((e,i)=>`<div class="item"><div class="n"><b>${esc(e.name)}</b><small>${e.min} dk</small></div><button class="rcd" data-i="${i}" style="color:var(--bad);background:none;border:0">Sil</button></div>`).join(""):`<div class="empty">Bu gün için seans yok.</div>`}</div>`;
+  bindSeg();
+  document.querySelectorAll("#rcG button").forEach(b=>b.onclick=()=>{RCS.g=b.dataset.g;renderREC()});
+  document.querySelectorAll("#t-work .rcA").forEach(b=>b.onclick=()=>{
+    const t=RECT.find(x=>x.id===b.dataset.id),inp=document.querySelector('#t-work .rcM[data-id="'+b.dataset.id+'"]'),v=Math.round(+inp.value);
+    if(!t||!(v>0&&v<=600))return alert("Dakika gir.");
+    const L=S.rec[d]=S.rec[d]||[];L.push({id:t.id,name:t.n,min:v,ts:Date.now()});save();renderREC();
+  });
+  $("rcAdd").onclick=()=>{const n=$("rcN").value.trim().slice(0,60),v=Math.round(+$("rcMin").value);if(!n)return alert("Seans adı yaz.");if(!(v>0&&v<=600))return alert("Dakika gir.");const L=S.rec[d]=S.rec[d]||[];L.push({id:"x",name:n,min:v,ts:Date.now()});save();renderREC()};
+  document.querySelectorAll("#t-work .rcd").forEach(b=>b.onclick=()=>{S.rec[d].splice(+b.dataset.i,1);save();renderREC()});
+}
+
+/* ----- Koç planı ----- */
+const PKI=[["gym","Klasik"],["cf","CrossFit"],["hy","Hyrox"],["cal","Calisthenics"],["med","Meditasyon"],["rec","Recovery"]];
+const PTI=[["","Gün içi"],["am","Sabah"],["noon","Öğlen"],["pm","Akşam üstü"]];
+const pkName=k=>(PKI.find(x=>x[0]===k)||[0,k])[1],ptName=t=>(PTI.find(x=>x[0]===t)||PTI[0])[1];
+const planDone=(D,it)=>(D.pdone&&D.pdone[it.id]===true)||(it.k==="gym"?((D.work||{})[it.d]||[]).length:(((D[it.k]||{})[it.d])||[]).length)>0;
+const planSort=a=>[...a].sort((x,y)=>(x.d+PTI.findIndex(p=>p[0]===x.t)).localeCompare(y.d+PTI.findIndex(p=>p[0]===y.t)));
+const planDay=(d,today)=>{const a=Math.round((new Date(d)-new Date(today))/864e5);return a===0?"Bugün":a===1?"Yarın":a===-1?"Dün":new Date(d).toLocaleDateString(LOC(),{weekday:"long",day:"numeric",month:"short"})};
+let PLAN;
+async function loadPlan(){PLAN=[];try{PLAN=(await api("myplan")).plan||[]}catch(e){}if(tab==="home")renderHome();else if(tab==="work")fillPlan()}
+function planRows(list,today){
+  let last="";
+  return planSort(list).map(it=>{
+    const dn=planDone(S,it),man=S.pdone&&S.pdone[it.id]===true,h=it.d!==last?`<h2 style="margin:10px 0 0">${planDay(it.d,today)}</h2>`:"";last=it.d;
+    return `${h}<div class="item"><div class="n"><b>${ptName(it.t)}</b> · <span>${pkName(it.k)}</span>${it.n?`<small>${esc(it.n)}</small>`:""}</div>${dn?(man?`<button class="plk" data-id="${it.id}">✓ Yapıldı</button>`:`<span style="color:var(--ac)">✓ Yapıldı</span>`):(it.d<today?`<button class="plk" data-id="${it.id}">Yaptım</button>`:`<button class="plg" data-k="${it.k}" data-d="${it.d}">Başla</button><button class="plk" data-id="${it.id}">Yaptım</button>`)}</div>`;
+  }).join("");
+}
+function planBind(root){
+  const today=isoD(new Date());
+  root.querySelectorAll(".plk").forEach(b=>b.onclick=()=>{S.pdone=S.pdone||{};if(S.pdone[b.dataset.id])delete S.pdone[b.dataset.id];else S.pdone[b.dataset.id]=true;save();if(tab==="home")renderHome();else fillPlan()});
+  root.querySelectorAll(".plg").forEach(b=>b.onclick=()=>{WMODE=b.dataset.k;tab="work";$("date").value=today;render()});
+}
+function coachPlanCard(){
+  if(PLAN===undefined){loadPlan();return""}
+  const today=isoD(new Date()),t2=isoD(new Date(Date.now()+864e5)),L=(PLAN||[]).filter(x=>x.d===today||x.d===t2);
+  if(!L.length)return"";
+  return `<h2>Koçunun planı</h2><div class="card" id="planHome">${planRows(L,today)}</div>`;
+}
+function fillPlan(){
+  const box=$("planBox");if(!box)return;
+  if(PLAN===undefined){loadPlan();return}
+  const today=isoD(new Date()),y=isoD(new Date(Date.now()-864e5)),e=isoD(new Date(Date.now()+7*864e5)),L=(PLAN||[]).filter(x=>x.d>=y&&x.d<=e);
+  box.innerHTML=L.length?`<h2>Haftalık planım</h2><div class="card">${planRows(L,today)}</div>`:"";
+  planBind(box);
+}
+
 /* ---------- Hareket rehberi (açık lisanslı görseller) ---------- */
 const GFORK="https://cdn.jsdelivr.net/gh/hnburcu-bit/free-exercise-db@main/";/* yedek: kendi fork'unun adresi, örn. https://cdn.jsdelivr.net/gh/KULLANICI/free-exercise-db@main/ */
 const GBASES=(GFORK?[GFORK]:[]).concat(["https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/"]);
@@ -1651,6 +1730,7 @@ function renderWork(){
   if(WMODE==="hy"){renderHX();return}
   if(WMODE==="med"){renderMed();return}
   if(WMODE==="cal"){renderCAL();return}
+  if(WMODE==="rec"){renderREC();return}
   const d=$("date").value,list=S.work[d]||[];
   $("t-work").innerHTML=`${heroBox("run","Antrenman","Bugünkü çalışmanı kaydet")}${segHTML("gym")}
   <button id="gxOpen" class="pri" style="width:100%;margin-bottom:8px">📖 Hareket rehberi (görselli)</button>
@@ -1750,6 +1830,9 @@ function csvReport(D,title){
     Object.keys(HY).sort().forEach(x=>(HY[x]||[]).forEach(e=>L.push(e.k==="race"?row([x,"Yarış / simülasyon",e.div,hms(e.tot),(e.sp||[]).map((v,i)=>HXS[i].n+" "+(v==null?"-":hms(v))).join(" | ")]):row([x,"Antrenman",e.name,e.res||"",e.note||""]))))}
   if(Object.keys(CA_).some(x=>(CA_[x]||[]).length)){L.push("",row(["CALISTHENICS"]),row(["Tarih","Tür","Hareket / ad","Set","Tekrar","Süre (sn)","Sonuç / not"]));
     Object.keys(CA_).sort().forEach(x=>(CA_[x]||[]).forEach(e=>L.push(e.k==="set"?row([x,"Hareket",e.name,e.sets,e.reps||"",e.secs||"",e.note||""]):row([x,"Antrenman",e.name,"","","",e.res||""]))))}
+  const RC_=D.rec||{};
+  if(Object.keys(RC_).some(x=>(RC_[x]||[]).length)){L.push("",row(["RECOVERY"]),row(["Tarih","Seans","Dakika"]));
+    Object.keys(RC_).sort().forEach(x=>(RC_[x]||[]).forEach(e=>L.push(row([x,e.name,e.min]))))}
   if(Object.keys(MD_).some(x=>(MD_[x]||[]).length)){L.push("",row(["MEDİTASYON"]),row(["Tarih","Tür","Dakika","Ruh hali (1-4)"]));
     Object.keys(MD_).sort().forEach(x=>(MD_[x]||[]).forEach(e=>L.push(row([x,(MEDT.find(t=>t.id===e.type)||{n:e.type}).n,e.min,e.mood||""]))))}
   L.push("",row(["YEMEKLER"]),row(["Tarih","Öğün","Yiyecek","Miktar","Kalori","Protein","Karb.","Yağ"]));
@@ -1881,6 +1964,7 @@ const ART={
  tape:SV+'<circle cx="62" cy="72" r="42"/><circle cx="62" cy="72" r="14" fill="currentColor"/><path d="M104 72H196M104 100H196"/><path d="M122 100V86M140 100V78M158 100V86M176 100V78M194 100V86"/></svg>',
  team:SV+'<circle cx="100" cy="40" r="15" fill="currentColor"/><path d="M70 118C70 80 130 80 130 118"/><circle cx="44" cy="60" r="11" fill="currentColor"/><path d="M22 118C22 94 66 94 66 118"/><circle cx="156" cy="60" r="11" fill="currentColor"/><path d="M134 118C134 94 178 94 178 118"/></svg>',
  med:SV+'<circle cx="100" cy="50" r="15" fill="currentColor"/><path d="M62 116C62 78 138 78 138 116"/><path d="M36 116H164"/><circle cx="100" cy="50" r="32"/></svg>',
+ rec:SV+'<circle cx="100" cy="34" r="12" fill="currentColor"/><path d="M100 48V90M100 58L66 36M100 58L134 36M100 90L76 124M100 90L124 124M30 132H170"/></svg>',
  pull:SV+'<path d="M40 20H160M44 20V130M156 20V130M80 20L84 36L92 52M120 20L116 36L108 52M100 50V86M100 86L94 112L108 126M100 86L106 110L92 124"/><circle cx="100" cy="34" r="9" fill="currentColor"/></svg>'
 };
 const heroBox=(a,t,sub)=>`<div class="hero">${ART[a]}<div><small>${esc(sub)}</small><h1>${esc(t)}</h1></div></div>`;
@@ -1915,6 +1999,7 @@ function renderHome(){
   const ws7=weekStats(S,$("date").value),GK=(DIET&&DIET.kcal)||S.goal;
   $("t-home").innerHTML=`${heroBox("lift",name||"Move","Hoş geldin")}
   ${noteCard()}
+  ${coachPlanCard()}
   ${chkCard($("date").value)}
   <details class="card" ${name?"":"open"}><summary>Profil ve su hedefi</summary><div class="row" style="margin-top:8px"><input id="pN" placeholder="Ad" value="${esc(P.name||"")}"><input id="pS" placeholder="Soyad" value="${esc(P.surname||"")}"></div><label class="fld"><small>Günlük su hedefim (bardak, 1 bardak = 250 ml)${DIET&&DIET.water?" · koçun "+DIET.water+" bardak belirledi":""}</small><input id="pW" type="number" inputmode="numeric" placeholder="8" value="${P.water||""}"></label><button id="pSave" style="width:100%">Kaydet</button></details>
   ${have.length?`<h2>Son ölçümlerin</h2><div class="grid">${cards}${bmiCard}</div>
@@ -1924,6 +2009,7 @@ function renderHome(){
   ${badgeCard(S)}`;
   document.querySelectorAll("#t-home .ck").forEach(b=>b.onclick=()=>{toggleChk($("date").value,b.dataset.k);renderHome()});
   document.querySelectorAll("#t-home .wb").forEach(b=>b.onclick=()=>{const d=$("date").value;S.water[d]=Math.max(0,(S.water[d]||0)+ +b.dataset.d);save();renderHome()});
+  if($("planHome"))planBind($("planHome"));
   if($("noteOk"))$("noteOk").onclick=async()=>{try{await api("readnote");NOTE.read=true;renderHome()}catch(e){}};
   $("pSave").onclick=()=>{S.profile.name=$("pN").value.trim();S.profile.surname=$("pS").value.trim();const w=Math.max(0,Math.min(30,Math.round(+$("pW").value||0)));if(w)S.profile.water=w;else delete S.profile.water;save();renderHome()};
   document.querySelectorAll("#t-home .chips button").forEach(b=>b.onclick=()=>{cm=b.dataset.k;renderHome()});
@@ -2104,8 +2190,8 @@ async function renderMem(){
     const when=a=>a==null?"henüz kayıt yok":a<=0?"bugün":a===1?"dün":a+" gün önce";
     const act=L.filter(x=>!x.disabled),nmOf=x=>[x.name,x.surname].filter(Boolean).join(" ")||x.email,nl=l=>l.length?l.map(nmOf).map(esc).join(", "):"Hepsi girdi 👏";
     const hasMd=act.length&&act.every(x=>x.md!=null);
-    const wkCard=act.length?`<h2>Bu hafta (son 7 gün)</h2><div class="card"><div class="macros"><span>Antrenman giren <b>${act.filter(x=>x.w7>0).length}/${act.length}</b></span>${hasMd?`<span>Yemek giren <b>${act.filter(x=>x.md>0).length}/${act.length}</b></span>`:""}</div><small style="color:var(--mut)">Antrenman girmeyenler: ${nl(act.filter(x=>!x.w7))}</small>${hasMd?`<small style="color:var(--mut);display:block;margin-top:4px">Yemek girmeyenler: ${nl(act.filter(x=>!x.md))}</small>`:""}</div>`:"";
-    el.innerHTML=`${heroBox("team","Üyeler","Koç paneli")}${wkCard}<div class="chips" style="margin-top:8px"><button data-s="act" class="${MEM.sort==="name"?"":"on"}">Sessiz olanlar üstte</button><button data-s="name" class="${MEM.sort==="name"?"on":""}">Ada göre</button></div><div class="card" id="mlist">${LL.map((x,i)=>`<div class="item" data-i="${i}" style="cursor:pointer"><div class="n">${esc([x.name,x.surname].filter(Boolean).join(" ")||x.email)}${x.disabled?" <small>(pasif)</small>":""}${x.note&&!x.note.read?" 📝":""}<small>${esc(x.email)}${x.self?" · ben":""}</small>${x.self?"":`<small style="color:${x.ag==null||x.ag>=7?"var(--bad)":"var(--mut)"}">Son aktivite: ${when(x.ag)} · Antrenman ${x.w7}/7 · Öğün ${x.ate}✓ ${x.miss}✗${x.kg!=null?" · "+x.kg+" kg":""}</small>${x.md!=null?`<small style="color:var(--mut)">Yemek girilen gün ${x.md}/7${x.kc!=null?" · ort. "+x.kc+" kcal · P "+x.pr+" g":""}</small>`:""}`}</div><b>›</b></div>`).join("")}</div><button id="mBk" style="width:100%">Tüm üyelerin yedeğini indir</button><button id="mRf" style="width:100%;margin-top:8px">Listeyi yenile</button>`;
+    const wkCard=act.length?`<h2>Bu hafta (son 7 gün)</h2><div class="card"><div class="macros"><span>Antrenman giren <b>${act.filter(x=>x.w7>0).length}/${act.length}</b></span>${act.some(x=>x.pl&&x.pl[0])?`<span>Plan yapılan <b>${act.reduce((a,x)=>a+(x.pl?x.pl[1]:0),0)}/${act.reduce((a,x)=>a+(x.pl?x.pl[0]:0),0)}</b></span>`:""}${hasMd?`<span>Yemek giren <b>${act.filter(x=>x.md>0).length}/${act.length}</b></span>`:""}</div><small style="color:var(--mut)">Antrenman girmeyenler: ${nl(act.filter(x=>!x.w7))}</small>${hasMd?`<small style="color:var(--mut);display:block;margin-top:4px">Yemek girmeyenler: ${nl(act.filter(x=>!x.md))}</small>`:""}</div>`:"";
+    el.innerHTML=`${heroBox("team","Üyeler","Koç paneli")}${wkCard}<div class="chips" style="margin-top:8px"><button data-s="act" class="${MEM.sort==="name"?"":"on"}">Sessiz olanlar üstte</button><button data-s="name" class="${MEM.sort==="name"?"on":""}">Ada göre</button></div><div class="card" id="mlist">${LL.map((x,i)=>`<div class="item" data-i="${i}" style="cursor:pointer"><div class="n">${esc([x.name,x.surname].filter(Boolean).join(" ")||x.email)}${x.disabled?" <small>(pasif)</small>":""}${x.note&&!x.note.read?" 📝":""}<small>${esc(x.email)}${x.self?" · ben":""}</small>${x.self?"":`<small style="color:${x.ag==null||x.ag>=7?"var(--bad)":"var(--mut)"}">Son aktivite: ${when(x.ag)} · Antrenman ${x.w7}/7 · Öğün ${x.ate}✓ ${x.miss}✗${x.kg!=null?" · "+x.kg+" kg":""}</small>${x.pl&&x.pl[0]?`<small style="color:${x.pl[1]<x.pl[0]?"var(--mut)":"var(--ac)"}">Plan ${x.pl[1]}/${x.pl[0]} tamamlandı</small>`:""}${x.md!=null?`<small style="color:var(--mut)">Yemek girilen gün ${x.md}/7${x.kc!=null?" · ort. "+x.kc+" kcal · P "+x.pr+" g":""}</small>`:""}`}</div><b>›</b></div>`).join("")}</div><button id="mBk" style="width:100%">Tüm üyelerin yedeğini indir</button><button id="mRf" style="width:100%;margin-top:8px">Listeyi yenile</button>`;
     document.querySelectorAll("#t-mem .chips button").forEach(b=>b.onclick=()=>{MEM.sort=b.dataset.s;renderMem()});
     document.querySelectorAll("#mlist .item").forEach(it=>it.onclick=()=>{MEM.sel=LL[+it.dataset.i];MEM.pack=null;renderMem()});
     $("mRf").onclick=()=>{MEM.list=null;renderMem()};
@@ -2117,7 +2203,7 @@ async function renderMem(){
     };
     return;
   }
-  const m=MEM.sel,E=m.email,back=()=>{MEM.sel=null;MEM.pack=null;MEM.list=null;MEM.dm=null;renderMem()};
+  const m=MEM.sel,E=m.email,back=()=>{MEM.sel=null;MEM.pack=null;MEM.list=null;MEM.dm=null;MEM.plE=null;renderMem()};
   if(!MEM.pack){
     el.innerHTML=`<button id="mBack">‹ Üye listesi</button><div class="empty">Yükleniyor...</div>`;$("mBack").onclick=back;
     try{
@@ -2127,11 +2213,11 @@ async function renderMem(){
         D.profile=D.profile||{};D.meas=D.meas||[];D.work=D.work||{};D.meals=D.meals||{};D.checks=D.checks||{};
         if(!D.profile.name){D.profile.name=m.name;D.profile.surname=m.surname}
       }
-      MEM.pack={D,pt:(await api("getprogram",{email:E})).text,dt:(await api("getdiet",{email:E})).diet,nt:(await api("getnote",{email:E})).note};
+      MEM.pack={D,pt:(await api("getprogram",{email:E})).text,dt:(await api("getdiet",{email:E})).diet,nt:(await api("getnote",{email:E})).note,pl:m.self?[]:((await api("getplan",{email:E})).plan||[])};
     }catch(e){el.innerHTML=`<button id="mBack">‹ Üye listesi</button><div class="err">${esc(e.message)}</div>`;$("mBack").onclick=back;return}
     if(MEM.sel!==m)return;
   }
-  const {D,pt,dt,nt}=MEM.pack,P=D.profile||{},nm=[P.name,P.surname].filter(Boolean).join(" ")||E,st=stats(D);
+  const {D,pt,dt,nt,pl}=MEM.pack,P=D.profile||{},nm=[P.name,P.surname].filter(Boolean).join(" ")||E,st=stats(D);
   const ser=k=>[...(D.meas||[])].sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>x[k]!=null&&x[k]!=="").map(x=>({date:x.date,v:+x[k]}));
   const have=MET.filter(([k])=>ser(k).length);if(have.length&&!have.some(h=>h[0]===MEM.cm))MEM.cm=have[0][0];
   const cards=MET.map(([k,l,u])=>{const s=ser(k);if(!s.length)return"";const a=s[s.length-1],b=s[s.length-2],d=b?r1(a.v-b.v):null;
@@ -2139,7 +2225,7 @@ async function renderMem(){
   const dd=[];for(let i=6;i>=0;i--){const t=new Date();t.setDate(t.getDate()-i);dd.push(isoD(t))}
   const wk=dd.map(x=>{const c=(D.checks||{})[x]||{};return[new Date(x).toLocaleDateString(LOC(),{weekday:"short"}),c.w===true||(c.w==null&&((D.work||{})[x]||[]).length)?"ok":c.w===false?"no":""]});
   let ate=0,miss=0;dd.forEach(x=>Object.values(((D.checks||{})[x]||{}).m||{}).forEach(v=>{if(v===true)ate++;else if(v===false)miss++}));
-  const wd=[...new Set([...Object.keys(D.work||{}).filter(d=>(D.work[d]||[]).length),...Object.keys(D.cf||{}).filter(d=>(D.cf[d]||[]).length),...Object.keys(D.hy||{}).filter(d=>(D.hy[d]||[]).length),...Object.keys(D.cal||{}).filter(d=>(D.cal[d]||[]).length)])].sort().reverse().slice(0,4);
+  const wd=[...new Set([...Object.keys(D.work||{}).filter(d=>(D.work[d]||[]).length),...Object.keys(D.cf||{}).filter(d=>(D.cf[d]||[]).length),...Object.keys(D.hy||{}).filter(d=>(D.hy[d]||[]).length),...Object.keys(D.cal||{}).filter(d=>(D.cal[d]||[]).length),...Object.keys(D.rec||{}).filter(d=>(D.rec[d]||[]).length)])].sort().reverse().slice(0,4);
   const md=Object.keys(D.meals||{}).filter(d=>(D.meals[d]||[]).length).sort().reverse().slice(0,3);
   const got=BADGES.filter(([ic,n,ds,f,g])=>f(st)>=g).length,ws7=weekStats(D,isoD(new Date())),wgl=(dt&&dt.water)||+P.water||8;
   el.innerHTML=`<button id="mBack">‹ Üye listesi</button>
@@ -2147,10 +2233,11 @@ async function renderMem(){
   <div class="card" style="margin-top:8px"><div class="macros"><span>🔥 Seri <b>${st.cur} gün</b></span><span>Antrenman günü <b>${st.wd}</b></span><span>Rozet <b>${got}/${BADGES.length}</b></span></div></div>
   <h2>Son 7 gün</h2><div class="card"><div class="week">${wk.map(w=>`<div class="dy ${w[1]}"><small>${w[0]}</small><b>${w[1]==="ok"?"✓":w[1]==="no"?"✗":"·"}</b></div>`).join("")}</div><div class="macros"><span>Antrenman <b>${wk.filter(w=>w[1]==="ok").length}/7 gün</b></span><span>Öğün <b>${ate} yendi, ${miss} atlandı</b></span><span>Su <b>${ws7.water} / ${wgl} bardak/gün</b></span></div><div class="macros"><span>Ort. kalori <b>${ws7.n?ws7.kcal+(dt&&dt.kcal?" / "+dt.kcal:""):"-"}</b></span><span>Ort. protein <b>${ws7.n?ws7.p+(dt&&dt.p?" / "+dt.p:"")+" g":"-"}</b></span><span>Yemek girilen gün <b>${ws7.n}/7</b></span><span>Meditasyon <b>${ws7.med} dk</b></span></div></div><button id="rpDl" style="width:100%;margin-top:8px">📊 Raporu indir (Excel)</button>
   <h2>Ölçümler</h2>${have.length?`<div class="grid">${cards}</div><div class="card" style="margin-top:8px"><div class="chips">${have.map(([k,l])=>`<button data-k="${k}" class="${k===MEM.cm?"on":""}">${l}</button>`).join("")}</div>${chartSvgS(ser(MEM.cm))}</div>`:`<div class="card"><div class="empty">Henüz ölçüm yok.</div></div>`}
-  <h2>Son antrenmanlar</h2><div class="card">${wd.length?wd.map(d=>`<div class="item"><div class="n"><b>${d}</b><small>${[...(D.work[d]||[]).map(e=>esc(e.ex)+" "+e.sets+"×"+e.reps+(e.kg?" · "+e.kg+" kg":"")+(e.note?" · 📝 "+esc(e.note):"")),...((D.cf||{})[d]||[]).map(cfShort),...((D.hy||{})[d]||[]).map(hyShort),...((D.cal||{})[d]||[]).map(calShort)].join("<br>")}</small></div></div>`).join(""):`<div class="empty">Kayıt yok.</div>`}</div>
+  <h2>Son antrenmanlar</h2><div class="card">${wd.length?wd.map(d=>`<div class="item"><div class="n"><b>${d}</b><small>${[...(D.work[d]||[]).map(e=>esc(e.ex)+" "+e.sets+"×"+e.reps+(e.kg?" · "+e.kg+" kg":"")+(e.note?" · 📝 "+esc(e.note):"")),...((D.cf||{})[d]||[]).map(cfShort),...((D.hy||{})[d]||[]).map(hyShort),...((D.cal||{})[d]||[]).map(calShort),...((D.rec||{})[d]||[]).map(recShort)].join("<br>")}</small></div></div>`).join(""):`<div class="empty">Kayıt yok.</div>`}</div>
   <h2>Son beslenme</h2><div class="card">${md.length?md.map(d=>{const L=D.meals[d],k=L.reduce((a,x)=>a+x.kcal,0),pp=L.reduce((a,x)=>a+x.p,0);return `<div class="item"><div class="n"><b>${d}</b> · ${k} kcal · P ${r1(pp)} g<small>${L.map(x=>esc(x.name)+" "+(x.g?x.g+" g":esc(x.q||""))).join(", ")}</small></div></div>`}).join(""):`<div class="empty">Kayıt yok.</div>`}</div>
   <h2>Fotoğraflar</h2><div class="card"><div class="pg" id="mpg">Yükleniyor...</div></div>
   <h2>Üyeye not</h2><div class="card"><textarea id="ntT" rows="3" placeholder="Örn. Bu hafta bacak gününü 4 sete çıkar">${esc(nt?nt.text:"")}</textarea><small style="color:var(--mut)">${nt?(nt.read?"Üye okudu":"Üye henüz okumadı"):"Not yok"}. Boş bırakıp kaydedersen not silinir.</small><div class="err" id="ntE"></div><button class="pri" id="ntS" style="width:100%">Notu gönder</button></div>
+  ${m.self?"":`<h2>Haftalık plan</h2><div class="card"><div class="row"><input id="plD" type="date" value="${isoD(new Date())}"><select id="plT">${PTI.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select></div><div class="row"><select id="plK">${PKI.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select><select id="plR"><option value="1">Bir kez</option><option value="4">4 hafta, her hafta</option></select></div><input id="plN" placeholder="Not (örn. Bacak günü, yoga akışı)" style="width:100%;margin-bottom:8px"><button id="plA" style="width:100%">+ Plana ekle</button><div id="plL" style="margin:8px 0"></div><div class="err" id="plE"></div><button class="pri" id="plS" style="width:100%">Planı kaydet</button><small style="color:var(--mut)">Üye planı ana sayfada ve Antrenman sekmesinde görür.</small></div>`}
   <h2>Antrenman programı</h2><div class="card"><div class="row"><button id="mpAdd">+ Listeden hareket ekle</button><button id="mpDay">+ Gün başlığı</button></div><div class="row"><select id="mpTs" style="flex:1.6">${allTpl().map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join("")}</select><button id="mpTl">Şablonu ekle</button></div><div class="row"><select id="mpWs" style="flex:1.6">${CFW.map((w,i)=>`<option value="${i}">${esc(w[0])} · ${esc(fmtName(w[2]))}</option>`).join("")}</select><button id="mpWl">WOD'u ekle</button></div><textarea id="mpT" rows="8" placeholder="# Göğüs günü&#10;Bench press 4x8&#10;Incline press 3x10&#10;# Bacak günü&#10;Squat 5x5">${esc(pt||"")}</textarea><small style="color:var(--mut)"># ile gün başlığı, hareketleri "Hareket 4x8" biçiminde yaz. Yukarıdaki butonlarla listeden, şablondan veya CrossFit WOD listesinden ekleyebilir, sonra metni düzenleyebilirsin.</small><div class="err" id="mpE"></div><button class="pri" id="mpS" style="width:100%">Programı kaydet</button></div>
   <h2>Beslenme programı</h2><div class="card"><b>Öğün planı (yemek listesinden)</b><div id="dmL" style="margin:8px 0"></div><input id="dmN" autocomplete="off" placeholder="Yiyecek ara (örn. fasulye, yulaf)" style="width:100%;margin-bottom:8px"><div class="sug" id="dmSug"></div><div class="row"><input id="dmG" type="number" inputmode="decimal" placeholder="Miktar"><select id="dmU" style="flex:1.6"><option value="1">gram</option></select></div><select id="dmM" style="width:100%;margin-bottom:8px">${MEALS.map(x=>`<option value="${x}">${x}</option>`).join("")}</select><div class="prev" id="dmP"></div><div class="row"><button id="dmA" class="pri">Plana ekle</button><button id="dmCalc">Hedefleri plandan hesapla</button></div></div><div class="card"><div class="grid"><label class="fld"><small>Kalori hedefi</small><input id="dK" type="number" inputmode="numeric" value="${dt&&dt.kcal||""}"></label><label class="fld"><small>Protein (g)</small><input id="dP" type="number" inputmode="numeric" value="${dt&&dt.p||""}"></label><label class="fld"><small>Karbonhidrat (g)</small><input id="dC" type="number" inputmode="numeric" value="${dt&&dt.c||""}"></label><label class="fld"><small>Yağ (g)</small><input id="dF" type="number" inputmode="numeric" value="${dt&&dt.f||""}"></label><label class="fld"><small>Su hedefi (bardak)</small><input id="dW" type="number" inputmode="numeric" placeholder="8" value="${dt&&dt.water||""}"></label></div><textarea id="dT" rows="7" style="margin-top:8px" placeholder="Ek notlar (örn. günde 3 litre su iç)">${esc((dt&&dt.text)||"")}</textarea><div class="err" id="dE"></div><button class="pri" id="dS" style="width:100%">Beslenme programını kaydet</button></div>
   ${m.self?"":`<h2>Şifre</h2><div class="card"><input id="rpN" type="text" autocomplete="off" placeholder="Yeni şifre (en az 8 karakter)" style="width:100%;margin-bottom:8px"><div class="err" id="rpE"></div><button id="rpS" style="width:100%">Şifreyi sıfırla</button><small style="color:var(--mut)">Üyenin diğer cihazlardaki oturumları kapanır, yeni şifreyle girer.</small></div><h2>Hesap</h2><div class="card"><button id="acDl" style="width:100%;margin-bottom:8px">Üyenin verisini indir (yedek)</button><button id="acA" style="width:100%;margin-bottom:8px">${m.disabled?"Hesabı aktifleştir":"Hesabı pasife al"}</button><button id="acD" style="width:100%;color:var(--bad)">Üyeyi kalıcı sil</button><div class="err" id="acE"></div><small style="color:var(--mut)">Pasife alınan üye giriş yapamaz, kayıtları durur. Silme geri alınamaz.</small></div>`}
@@ -2160,6 +2247,22 @@ async function renderMem(){
   document.querySelectorAll("#t-mem .chips button").forEach(b=>b.onclick=()=>{MEM.cm=b.dataset.k;renderMem()});
   const say=(id,ok,msg)=>{$(id).style.color=ok?"var(--ac)":"var(--bad)";$(id).textContent=msg};
   const mpApp=L=>{const ta=$("mpT"),v=ta.value.replace(/\s+$/,"");ta.value=(v?v+"\n":"")+L.join("\n")+"\n";ta.scrollTop=ta.scrollHeight};
+  if(!m.self){
+    if(MEM.plE!==E){MEM.pl=(pl||[]).map(x=>({...x}));MEM.plE=E}
+    const plDraw=()=>{
+      const today=isoD(new Date());
+      $("plL").innerHTML=MEM.pl.length?planSort(MEM.pl).map(it=>`<div class="item"><div class="n"><b>${planDay(it.d,today)}</b> · <span>${ptName(it.t)}</span> · <span>${pkName(it.k)}</span>${it.n?`<small>${esc(it.n)}</small>`:""}</div>${planDone(D,it)?`<span style="color:var(--ac)">✓</span>`:""}<button class="plx" data-id="${it.id}" style="color:var(--bad);background:none;border:0">Sil</button></div>`).join(""):`<div class="empty">Plan boş.</div>`;
+      document.querySelectorAll("#plL .plx").forEach(b=>b.onclick=()=>{MEM.pl=MEM.pl.filter(x=>x.id!==b.dataset.id);plDraw()});
+    };
+    plDraw();
+    $("plA").onclick=()=>{
+      const d=$("plD").value;if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return say("plE",0,"Tarih seç");
+      const n=+$("plR").value;
+      for(let i=0;i<n;i++){const t=new Date(d);t.setDate(t.getDate()+7*i);MEM.pl.push({id:Math.random().toString(36).slice(2,8),d:isoD(t),t:$("plT").value,k:$("plK").value,n:$("plN").value.trim().slice(0,80)})}
+      $("plN").value="";say("plE",1,"");plDraw();
+    };
+    $("plS").onclick=async()=>{try{const r=await api("setplan",{email:E,plan:MEM.pl});MEM.pl=r.plan||MEM.pl;MEM.pack.pl=MEM.pl.map(x=>({...x}));MEM.list=null;plDraw();say("plE",1,"Plan kaydedildi")}catch(e){say("plE",0,e.message)}};
+  }
   $("mpAdd").onclick=()=>pickEx(n=>mpApp([n+" 3x10"]));
   $("mpDay").onclick=()=>mpApp(["# Yeni gün"]);
   $("mpTl").onclick=()=>{const t=allTpl().find(x=>x.id===$("mpTs").value);if(!t)return;mpApp(["# "+t.name.replace(/ \(benim\)$/,""),...t.items.map(i=>i.ex+" "+i.sets+"x"+i.reps)])};
