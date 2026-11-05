@@ -25,7 +25,18 @@ function same(a, b) {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 const hashPw = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString("hex");
-const CH = ["work", "meals", "checks", "water", "cf", "hy", "med", "cal"];
+const CH = ["work", "meals", "checks", "water", "cf", "hy", "med", "cal", "rec"];
+const PK = ["gym", "cf", "hy", "cal", "med", "rec"], PT = ["", "am", "noon", "pm"];
+function cleanPlan(a) {
+  const lim = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10), out = [];
+  (Array.isArray(a) ? a : []).slice(0, 300).forEach(x => {
+    if (!x || typeof x !== "object") return;
+    const d = String(x.d || ""), k = String(x.k || ""), t = String(x.t || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d < lim || !PK.includes(k) || !PT.includes(t)) return;
+    out.push({ id: String(x.id || "").replace(/[^a-z0-9]/gi, "").slice(0, 12) || crypto.randomBytes(4).toString("hex"), d, t, k, n: String(x.n || "").trim().slice(0, 80) });
+  });
+  return out.slice(0, 200);
+}
 const pj = s => { try { return s ? JSON.parse(s) : null; } catch (e) { return null; } };
 async function loadAll(email) {
   const core = pj(await redis(["GET", "data:" + email]));
@@ -39,7 +50,7 @@ function mergeData(core, months) {
   Object.keys(months).sort().forEach(m => CH.forEach(k => Object.assign(D[k], (months[m] || {})[k] || {})));
   return D;
 }
-function digest(D, dates7) {
+function digest(D, dates7, plan) {
   const W = D.work || {}, C = D.checks || {}, M = D.meals || {}, days = new Set(), act = new Set();
   Object.keys(W).forEach(d => { if ((W[d] || []).length) { days.add(d); act.add(d); } });
   Object.keys(M).forEach(d => { if ((M[d] || []).length) act.add(d); });
@@ -47,13 +58,16 @@ function digest(D, dates7) {
   Object.keys(D.hy || {}).forEach(d => { if ((D.hy[d] || []).length) { days.add(d); act.add(d); } });
   Object.keys(D.cal || {}).forEach(d => { if ((D.cal[d] || []).length) { days.add(d); act.add(d); } });
   Object.keys(D.med || {}).forEach(d => { if ((D.med[d] || []).length) act.add(d); });
+  Object.keys(D.rec || {}).forEach(d => { if ((D.rec[d] || []).length) act.add(d); });
   Object.keys(C).forEach(d => { act.add(d); if (C[d].w === true) days.add(d); else if (C[d].w === false) days.delete(d); });
   let ate = 0, miss = 0;
   dates7.forEach(d => Object.values((C[d] || {}).m || {}).forEach(v => { if (v === true) ate++; else if (v === false) miss++; }));
   const kgs = [...(D.meas || [])].filter(x => x.kg != null).sort((a, b) => a.date.localeCompare(b.date)), lk = kgs[kgs.length - 1];
   let kn = 0, kk = 0, kp = 0;
   dates7.forEach(d => { const L = M[d] || []; if (L.length) { kn++; kk += L.reduce((s, x) => s + (+x.kcal || 0), 0); kp += L.reduce((s, x) => s + (+x.p || 0), 0); } });
-  return { last: [...act].sort().pop() || null, w7: dates7.filter(d => days.has(d)).length, ate, miss, kg: lk ? lk.kg : null, md: kn, kc: kn ? Math.round(kk / kn) : null, pr: kn ? Math.round(kp / kn) : null };
+  const PD = D.pdone || {}, pp = (plan || []).filter(x => dates7.includes(x.d)), pn = pp.length;
+  const pdn = pp.filter(x => PD[x.id] === true || (k => k === "gym" ? (W[x.d] || []).length : ((D[k] || {})[x.d] || []).length)(x.k)).length;
+  return { pl: [pn, pdn], last: [...act].sort().pop() || null, w7: dates7.filter(d => days.has(d)).length, ate, miss, kg: lk ? lk.kg : null, md: kn, kc: kn ? Math.round(kk / kn) : null, pr: kn ? Math.round(kp / kn) : null };
 }
 
 module.exports = async (req, res) => {
@@ -134,6 +148,7 @@ module.exports = async (req, res) => {
     }
     if (b.action === "getvideos") return res.json({ v: pj(await redis(["GET", "videos"])) || {} });
     if (b.action === "mydiet") { const d = await redis(["GET", "diet:" + u.e]); return res.json({ diet: d ? JSON.parse(d) : null }); }
+    if (b.action === "myplan") return res.json({ plan: cleanPlan(pj(await redis(["GET", "plan:" + u.e]))) });
     if (b.action === "myprogram") return res.json({ text: (await redis(["GET", "prog:" + u.e])) || "" });
     if (u.a) {
       if (b.action === "setvideos") {
@@ -152,15 +167,22 @@ module.exports = async (req, res) => {
         const dates7 = [0, 1, 2, 3, 4, 5, 6].map(day), a = (await redis(["HGETALL", "users"])) || [], list = [];
         for (let i = 0; i < a.length; i += 2) { const r = pj(a[i + 1]) || {}; list.push({ email: a[i], name: r.name || "", surname: r.surname || "", disabled: !!r.disabled }); }
         const out = await Promise.all(list.map(async m => {
-          const [coreS, keys, noteS] = await Promise.all([redis(["GET", "data:" + m.email]), redis(["HKEYS", "mon:" + m.email]), redis(["GET", "note:" + m.email])]);
+          const [coreS, keys, noteS, planS] = await Promise.all([redis(["GET", "data:" + m.email]), redis(["HKEYS", "mon:" + m.email]), redis(["GET", "note:" + m.email]), redis(["GET", "plan:" + m.email])]);
           const ks = (keys || []).sort(), want = new Set([today.slice(0, 7), day(7).slice(0, 7)]);
           if (ks.length) want.add(ks[ks.length - 1]);
           const months = {};
           await Promise.all([...want].filter(k => ks.includes(k)).map(async k => { const v = pj(await redis(["HGET", "mon:" + m.email, k])); if (v) months[k] = v; }));
           const note = pj(noteS);
-          return { ...m, ...digest(mergeData(pj(coreS), months), dates7), note: note ? { read: !!note.read } : null };
+          return { ...m, ...digest(mergeData(pj(coreS), months), dates7, cleanPlan(pj(planS))), note: note ? { read: !!note.read } : null };
         }));
         return res.json({ members: out });
+      }
+      if (b.action === "setplan" || b.action === "getplan") {
+        if (tg === AE || !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
+        if (b.action === "getplan") return res.json({ plan: cleanPlan(pj(await redis(["GET", "plan:" + tg]))) });
+        const pl = cleanPlan(b.plan);
+        if (pl.length) await redis(["SET", "plan:" + tg, JSON.stringify(pl)]); else await redis(["DEL", "plan:" + tg]);
+        return res.json({ ok: true, plan: pl });
       }
       if (b.action === "setnote" || b.action === "getnote") {
         if (tg !== AE && !(await redis(["HGET", "users", tg]))) return res.status(400).json({ error: "Bu kullanıcı yok" });
@@ -175,7 +197,7 @@ module.exports = async (req, res) => {
         if (!rr) return res.status(400).json({ error: "Bu kullanıcı yok" });
         if (b.action === "setactive") { const r = JSON.parse(rr); r.disabled = !b.active; await redis(["HSET", "users", tg, JSON.stringify(r)]); return res.json({ ok: true }); }
         await redis(["HDEL", "users", tg]);
-        await redis(["DEL", "data:" + tg, "mon:" + tg, "photos:" + tg, "prog:" + tg, "diet:" + tg, "note:" + tg]);
+        await redis(["DEL", "data:" + tg, "mon:" + tg, "photos:" + tg, "prog:" + tg, "diet:" + tg, "note:" + tg, "plan:" + tg]);
         return res.json({ ok: true });
       }
       if (b.action === "members") {
