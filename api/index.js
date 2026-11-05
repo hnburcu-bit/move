@@ -25,7 +25,7 @@ function same(a, b) {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 const hashPw = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString("hex");
-const CH = ["work", "meals", "checks", "water", "cf", "hy", "med"];
+const CH = ["work", "meals", "checks", "water", "cf", "hy", "med", "cal"];
 const pj = s => { try { return s ? JSON.parse(s) : null; } catch (e) { return null; } };
 async function loadAll(email) {
   const core = pj(await redis(["GET", "data:" + email]));
@@ -45,6 +45,7 @@ function digest(D, dates7) {
   Object.keys(M).forEach(d => { if ((M[d] || []).length) act.add(d); });
   Object.keys(D.cf || {}).forEach(d => { if ((D.cf[d] || []).length) { days.add(d); act.add(d); } });
   Object.keys(D.hy || {}).forEach(d => { if ((D.hy[d] || []).length) { days.add(d); act.add(d); } });
+  Object.keys(D.cal || {}).forEach(d => { if ((D.cal[d] || []).length) { days.add(d); act.add(d); } });
   Object.keys(D.med || {}).forEach(d => { if ((D.med[d] || []).length) act.add(d); });
   Object.keys(C).forEach(d => { act.add(d); if (C[d].w === true) days.add(d); else if (C[d].w === false) days.delete(d); });
   let ate = 0, miss = 0;
@@ -64,10 +65,11 @@ module.exports = async (req, res) => {
     if (b.action === "login") {
       const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "").trim();
       const ip = String((req.headers && req.headers["x-forwarded-for"]) || "x").split(",")[0].trim().slice(0, 64);
-      const k1 = "rl:" + ip + ":" + email.slice(0, 120), k2 = "rl:" + ip;
-      const [c1, c2] = [Number(await redis(["GET", k1])) || 0, Number(await redis(["GET", k2])) || 0];
-      if (c1 >= 8 || c2 >= 30) return res.status(429).json({ error: "Çok fazla hatalı deneme. 15 dakika sonra tekrar dene." });
-      const fail = async () => { for (const k of [k1, k2]) { const n = await redis(["INCR", k]); if (n === 1) await redis(["EXPIRE", k, 900]); } };
+      const k1 = "rl:" + ip + ":" + email.slice(0, 120), k2 = "rl:" + ip, k3 = "rl:e:" + email.slice(0, 120);
+      if (pw.length > 200 || email.length > 200) return res.status(400).json({ error: "E-posta veya şifre hatalı" });
+      const [c1, c2, c3] = [Number(await redis(["GET", k1])) || 0, Number(await redis(["GET", k2])) || 0, Number(await redis(["GET", k3])) || 0];
+      if (c1 >= 8 || c2 >= 30 || c3 >= 25) return res.status(429).json({ error: "Çok fazla hatalı deneme. 15 dakika sonra tekrar dene." });
+      const fail = async () => { for (const k of [k1, k2, k3]) { const n = await redis(["INCR", k]); if (n === 1) await redis(["EXPIRE", k, 900]); } };
       if (email === AE && same(pw, AP)) { await redis(["DEL", k1]); return res.json({ token: mkToken({ e: email, a: 1 }), email, admin: true }); }
       const rec = await redis(["HGET", "users", email]);
       if (rec) {
@@ -101,7 +103,7 @@ module.exports = async (req, res) => {
     if (b.action === "changepw") {
       if (u.a) return res.status(400).json({ error: "Yönetici şifresi Vercel'deki ADMIN_PASSWORD ayarından değiştirilir" });
       const np = String(b.password || "");
-      if (np.length < 6) return res.status(400).json({ error: "Yeni şifre en az 6 karakter olmalı" });
+      if (np.length < 8 || np.length > 200) return res.status(400).json({ error: "Yeni şifre en az 8 karakter olmalı" });
       const rc = JSON.parse(await redis(["HGET", "users", u.e]));
       if (!same(hashPw(String(b.current || ""), rc.salt), rc.hash)) return res.status(400).json({ error: "Mevcut şifre hatalı" });
       const salt = crypto.randomBytes(16).toString("hex"), hash = hashPw(np, salt);
@@ -185,7 +187,7 @@ module.exports = async (req, res) => {
         const np = String(b.password || ""), rr = tg === AE ? null : await redis(["HGET", "users", tg]);
         if (tg === AE) return res.status(400).json({ error: "Yönetici şifresi Vercel'den değiştirilir" });
         if (!rr) return res.status(400).json({ error: "Bu kullanıcı yok" });
-        if (np.length < 6) return res.status(400).json({ error: "Şifre en az 6 karakter olmalı" });
+        if (np.length < 8 || np.length > 200) return res.status(400).json({ error: "Şifre en az 8 karakter olmalı" });
         const salt = crypto.randomBytes(16).toString("hex");
         await redis(["HSET", "users", tg, JSON.stringify({ ...JSON.parse(rr), salt, hash: hashPw(np, salt) })]);
         return res.json({ ok: true });
@@ -221,7 +223,7 @@ module.exports = async (req, res) => {
       if (b.action === "adduser") {
         const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || ""), name = String(b.name || "").trim().slice(0, 40), surname = String(b.surname || "").trim().slice(0, 40);
         if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: "Geçerli bir e-posta yaz" });
-        if (pw.length < 6) return res.status(400).json({ error: "Şifre en az 6 karakter olmalı" });
+        if (pw.length < 8 || pw.length > 200) return res.status(400).json({ error: "Şifre en az 8 karakter olmalı" });
         if (email === AE) return res.status(400).json({ error: "Bu e-posta yönetici hesabı" });
         const salt = crypto.randomBytes(16).toString("hex");
         await redis(["HSET", "users", email, JSON.stringify({ salt, hash: hashPw(pw, salt), name, surname })]);
